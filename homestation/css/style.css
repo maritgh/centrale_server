@@ -152,3 +152,17 @@ nav a {
 nav a:hover {
     text-decoration: underline;
 }
+
+.register-card > label,
+.register-card > input {
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 700px) {
+    header { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+    nav { flex-wrap: wrap; gap: 12px; }
+    main { padding: 16px; }
+    .register-card { padding: 20px; }
+    #map { height: 60vh; }
+}

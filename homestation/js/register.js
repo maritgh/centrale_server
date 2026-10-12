@@ -8,12 +8,15 @@ const apiKeyElement = document.getElementById("apiKey");
 
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const button = form.querySelector('button[type="submit"]');
+    if (button.disabled) return;
+    button.disabled = true;
 
     errorMessage.textContent = "";
     result.classList.add("hidden");
 
     const data = {
-        name: document.getElementById("name").value,
+        name: document.getElementById("name").value.trim(),
         latitude: Number(
             document.getElementById("latitude").value
         ),
@@ -51,8 +54,12 @@ form.addEventListener("submit", async (event) => {
 
         // Tijdelijk bewaren zodat connect.html
         // deze gegevens automatisch kan invullen
-        sessionStorage.setItem("stationId", stationId);
-        sessionStorage.setItem("apiKey", apiKey);
+        try {
+            sessionStorage.setItem("stationId", stationId);
+            sessionStorage.setItem("apiKey", apiKey);
+        } catch {
+            // Credentials are still visible and can be copied manually.
+        }
 
         result.classList.remove("hidden");
 
@@ -61,5 +68,7 @@ form.addEventListener("submit", async (event) => {
 
     } catch (error) {
         errorMessage.textContent = error.message;
+    } finally {
+        button.disabled = false;
     }
 });

@@ -56,6 +56,11 @@
             placeholder="jouw API-key"
         >
 
+        <label for="serverUrlInput">Serveradres</label>
+        <input type="url" id="serverUrlInput" placeholder="http://192.168.1.10:3000">
+        <p>Gebruik een adres dat jouw ESP32 via WiFi kan bereiken. Voor een lokale server is dit het LAN-IP van je computer met poort 3000.</p>
+        <p id="connectError" class="error" role="alert"></p>
+
         <button id="generateButton" class="button" type="button">
             Maak mijn code
         </button>
@@ -96,6 +101,7 @@
             </p>
 
             <pre id="arduinoCode"></pre>
+            <p id="httpsNotice" class="hidden">Voor HTTPS: vervang de certificaat-placeholder in de code door het PEM-rootcertificaat van de server en synchroniseer de ESP32-klok via NTP voordat je data verstuurt.</p>
 
             <button id="copyButton" class="button" type="button">
                 Kopieer code
