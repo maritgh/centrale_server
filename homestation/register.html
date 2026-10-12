@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Home Station aanmelden</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Home Station Network</h1>
+        <p>Meld jouw Home Station aan</p>
+    </div>
+
+    <nav>
+        <a href="/">Weerkaart</a>
+        <a href="/register.html">Station aanmelden</a>
+        <a href="/connect.html">Hoe verstuur ik data?</a>
+    </nav>
+</header>
+<main>
+
+    <section class="register-card">
+
+        <h2>Station aanmelden</h2>
+
+        <p>
+            Vul hieronder de gegevens van jouw Home Station in.
+            Je ontvangt daarna automatisch een Station ID en API-key.
+        </p>
+
+        <form id="registerForm">
+
+            <label for="name">Naam</label>
+            <input
+                type="text"
+                id="name"
+                required
+                placeholder="Bijvoorbeeld Sam"
+            >
+
+            <label for="latitude">Latitude</label>
+            <input
+                type="number"
+                id="latitude"
+                step="any"
+                required
+                placeholder="Bijvoorbeeld 51.9225"
+            >
+
+            <label for="longitude">Longitude</label>
+            <input
+                type="number"
+                id="longitude"
+                step="any"
+                required
+                placeholder="Bijvoorbeeld 4.4792"
+            >
+
+            <small>
+                Zoek je locatie op in Google Maps en kopieer de coördinaten.
+            </small>
+
+            <label for="classCode">Klascode</label>
+            <input
+                type="password"
+                id="classCode"
+                required
+                placeholder="Klascode"
+            >
+
+            <button type="submit" class="button">
+                Station aanmelden
+            </button>
+
+        </form>
+
+        <p id="errorMessage" class="error"></p>
+
+<section id="result" class="result hidden">
+
+    <h2>✅ Station aangemaakt!</h2>
+
+    <p>
+        Bewaar onderstaande gegevens. Je hebt ze nodig
+        om jouw ESP32 gegevens naar de weerkaart te laten sturen.
+    </p>
+
+    <div class="result-item">
+        <strong>Station ID</strong>
+        <code id="stationId"></code>
+    </div>
+
+    <div class="result-item">
+        <strong>API-key</strong>
+        <code id="apiKey"></code>
+    </div>
+
+    <p>
+        De volgende pagina laat zien hoe je met jouw ESP32
+        een PUT-request naar de server verstuurt.
+    </p>
+
+    <a href="/connect.html" class="button">
+        Bekijk hoe je data verstuurt
+    </a>
+
+</section>
+
+    </section>
+
+</main>
+
+<script src="/js/register.js"></script>
+
+</body>
+</html>
+

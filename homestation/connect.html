@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hoe verstuur ik data?</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Home Station Network</h1>
+        <p>Live weergegevens van onze Home Stations</p>
+    </div>
+
+    <nav>
+        <a href="/">Weerkaart</a>
+        <a href="/register.html">Station aanmelden</a>
+        <a href="/connect.html">Hoe verstuur ik data?</a>
+    </nav>
+</header>
+
+<main>
+
+    <section class="register-card">
+
+        <h2>Meetgegevens versturen vanaf je ESP32</h2>
+
+        <p>
+            Jouw ESP32 stuurt temperatuur, luchtvochtigheid en
+            windsnelheid naar de centrale server met een HTTP
+            PUT-request.
+        </p>
+
+        <p>
+            Vul hieronder jouw Station ID en API-key in.
+            Als je net een station hebt aangemaakt, worden deze
+            automatisch ingevuld.
+        </p>
+
+        <label for="stationIdInput">Station ID</label>
+        <input
+            type="text"
+            id="stationIdInput"
+            placeholder="bijvoorbeeld elisa"
+        >
+
+        <label for="apiKeyInput">API-key</label>
+        <input
+            type="text"
+            id="apiKeyInput"
+            placeholder="jouw API-key"
+        >
+
+        <button id="generateButton" class="button" type="button">
+            Maak mijn code
+        </button>
+
+
+        <section id="codeSection" class="hidden">
+
+            <h2>1. PUT-request</h2>
+
+            <p>
+                Jouw ESP32 verstuurt de meetgegevens naar:
+            </p>
+
+            <pre id="endpoint"></pre>
+
+            <p>
+                Bij het request stuur je jouw API-key mee:
+            </p>
+
+            <pre id="headerExample"></pre>
+
+            <p>
+                De body van het request ziet er bijvoorbeeld zo uit:
+            </p>
+
+            <pre>{
+  "temperature": 20.4,
+  "humidity": 58,
+  "windSpeed": 2.7
+}</pre>
+
+
+            <h2>2. ESP32-code</h2>
+
+            <p>
+                Voeg onderstaande functie toe aan je Arduino-project.
+                Je ESP32 moet al verbonden zijn met WiFi.
+            </p>
+
+            <pre id="arduinoCode"></pre>
+
+            <button id="copyButton" class="button" type="button">
+                Kopieer code
+            </button>
+
+
+            <h2>3. Gebruik de functie</h2>
+
+            <p>
+                Wanneer je jouw meetgegevens naar de server wilt sturen,
+                kun je de functie aanroepen met jouw eigen sensorwaarden:
+            </p>
+
+            <pre>sendHomeStationData(
+    temperature,
+    humidity,
+    windSpeed
+);</pre>
+
+            <p>
+                Hierbij is:
+            </p>
+
+            <ul>
+                <li>
+                    <strong>temperature</strong> =
+                    temperatuur in °C
+                </li>
+
+                <li>
+                    <strong>humidity</strong> =
+                    luchtvochtigheid in %
+                </li>
+
+                <li>
+                    <strong>windSpeed</strong> =
+                    windsnelheid in m/s
+                </li>
+            </ul>
+
+            <p>
+                Je bepaalt zelf waar en hoe vaak je deze functie
+                in jouw programma aanroept.
+            </p>
+
+            <p>
+                Bij een succesvolle request geeft de server
+                HTTP-code <strong>200</strong> terug.
+            </p>
+
+        </section>
+
+    </section>
+
+</main>
+
+<script src="/js/connect.js"></script>
+
+</body>
+</html>
