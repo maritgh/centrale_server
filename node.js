@@ -104,7 +104,7 @@ if (require.main === module) {
     user: process.env.DB_USER, password: process.env.DB_PASSWORD, connectionTimeoutMillis: 5000,
   });
   pool.on("error", error => console.error("Database connection error:", error.message));
-  const port = Number(process.env.PORT || 3000);
+  const port = Number(process.env.PORT || 3001);
   const host = process.env.HOST || "127.0.0.1";
   const server = createApp({ pool, classCode: process.env.CLASS_CODE }).listen(port, host, () => {
     console.log(`Home Station: http://${host}:${port}`);

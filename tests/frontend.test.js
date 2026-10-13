@@ -42,15 +42,15 @@ test("ESP32 code uses the configured origin, escapes JSON, and validates address
   const elements = {};
   const context = vm.createContext({
     document: { getElementById(id) { return elements[id] ||= element(); } },
-    window: { location: { origin: "http://192.168.1.10:3000" } },
+    window: { location: { origin: "http://192.168.1.10:3001" } },
     sessionStorage: { getItem(key) { return key === "stationId" ? "test" : "a".repeat(64); } },
     URL, navigator: {}, setTimeout() {},
   });
   vm.runInContext(source("connect.js"), context);
-  assert.equal(elements.endpoint.textContent, "PUT http://192.168.1.10:3000/api/stations/test/current");
+  assert.equal(elements.endpoint.textContent, "PUT http://192.168.1.10:3001/api/stations/test/current");
   assert.ok(elements.arduinoCode.textContent.includes('"{\\"temperature\\":"'));
   assert.ok(elements.arduinoCode.textContent.includes("http.begin(client, serverUrl)"));
-  elements.serverUrlInput.value = "http://localhost:3000";
+  elements.serverUrlInput.value = "http://localhost:3001";
   vm.runInContext("generateCode()", context);
   assert.match(elements.connectError.textContent, /LAN-IP/);
   elements.serverUrlInput.value = "https://weather.example.com";
