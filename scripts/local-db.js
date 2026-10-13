@@ -6,9 +6,17 @@ const { spawnSync } = require("child_process");
 const { setupDatabase } = require("./database");
 const root = path.join(__dirname, "..", ".local");
 const data = path.join(root, "postgres");
+const pgConfig = spawnSync("pg_config", ["--bindir"], { encoding: "utf8" });
+const postgresBin = !pgConfig.error && pgConfig.status === 0 ? pgConfig.stdout.trim() : "";
 function run(command, args, allowFailure = false) {
-  const result = spawnSync(command, args, { encoding: "utf8" });
-  if (result.error) throw new Error(`${command} is unavailable. Install PostgreSQL and add its bin directory to PATH.`);
+  const env = postgresBin
+    ? { ...process.env, PATH: [postgresBin, process.env.PATH].filter(Boolean).join(path.delimiter) }
+    : process.env;
+  const result = spawnSync(command, args, { encoding: "utf8", env });
+  if (result.error?.code === "ENOENT") {
+    throw new Error(`${command} is unavailable. Install PostgreSQL server tools and add their bin directory to PATH (pg_config --bindir).`);
+  }
+  if (result.error) throw result.error;
   if (result.status !== 0 && !allowFailure) throw new Error(result.stderr || result.stdout || `${command} failed`);
   return result;
 }

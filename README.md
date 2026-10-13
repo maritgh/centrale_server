@@ -4,7 +4,7 @@ The Node server serves the website in `homestation/` and the weather API. Postgr
 
 ## Run locally
 
-Requires Node.js 20 or newer and PostgreSQL with `initdb` and `pg_ctl` on PATH. PostgreSQL is already installed on this Mac.
+Requires Node.js 20 or newer and PostgreSQL server tools (`initdb` and `pg_ctl`). The local database script adds the directory reported by `pg_config --bindir` to its own PATH, so you do not need to configure it in your shell.
 
 ```sh
 npm install
@@ -13,7 +13,7 @@ npm run db:start
 npm start
 ```
 
-Open http://localhost:3000. Read `CLASS_CODE` from `.env` to register a station. Save the returned station ID and API key; the browser remembers them only for the current tab/session.
+Open http://localhost:3001. Read `CLASS_CODE` from `.env` to register a station. Save the returned station ID and API key; the browser remembers them only for the current tab/session.
 
 `setup` generates a private `.env` with random credentials and does not overwrite existing settings. `db:start` starts a separate local PostgreSQL cluster on port **55432**, creates the database, and applies `schema.sql`. Data persists in the ignored `.local/postgres/` directory. Keep `.env` with that database: changing its password does not change the existing PostgreSQL user's password.
 
@@ -38,9 +38,9 @@ For an HTTPS address, the generated code uses `WiFiClientSecure`: supply the ser
 
 ## Public server
 
-Install Node.js and PostgreSQL on the server, copy the project, install dependencies, and configure its `.env`. For a reverse proxy, set `HOST=127.0.0.1` and `PORT=3000`. Keep the API running using your server's process manager.
+Install Node.js and PostgreSQL on the server, copy the project, install dependencies, and configure its `.env`. For the included Nginx reverse proxy, set `HOST=127.0.0.1` and `PORT=3001`. Keep the API running using your server's process manager.
 
-An Nginx configuration example is in `deploy/nginx.conf.example`. It forwards the website and `/api` to Node. Adjust its IP/domain, install it on your server, validate with `nginx -t`, and reload Nginx. Configure HTTPS before sending real API keys over the internet. The public IP in the example is the one from the original code; verify that it belongs to your server. Nothing in this repository deploys to that machine automatically.
+The Nginx configuration in `deploy/nginx.conf.example` forwards the website and `/api` to Node on port 3001. Adjust its IP/domain, install it as your Nginx site, validate with `nginx -t`, and reload Nginx. Configure HTTPS before sending real API keys over the internet. The public IP in the example is the one from the original code; verify that it belongs to your server. Nothing in this repository deploys to that machine automatically.
 
 ## Checks
 
