@@ -42,6 +42,19 @@ Install Node.js and PostgreSQL on the server, copy the project, install dependen
 
 The Nginx configuration in `deploy/nginx.conf.example` forwards the website and `/api` to Node on port 3001. Adjust its IP/domain, install it as your Nginx site, validate with `nginx -t`, and reload Nginx. Configure HTTPS before sending real API keys over the internet. The public IP in the example is the one from the original code; verify that it belongs to your server. Nothing in this repository deploys to that machine automatically.
 
+### Keep the app running with systemd
+
+The included systemd units are configured for `/home/msnijder/centrale_server` and user `msnijder`. If the project is in a different location or runs as another user, update both unit files first. Install and start them with:
+
+```sh
+sudo install -m 644 deploy/homestation-db.service /etc/systemd/system/homestation-db.service
+sudo install -m 644 deploy/homestation.service /etc/systemd/system/homestation.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now homestation-db.service homestation.service
+```
+
+The database unit starts the local PostgreSQL cluster; the app unit starts Node after the database and restarts Node if it exits unexpectedly. Check status and logs with `systemctl status homestation-db homestation` and `journalctl -u homestation -f`. To stop both services, run `sudo systemctl stop homestation homestation-db`.
+
 ## Checks
 
 ```sh

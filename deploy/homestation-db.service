@@ -1,0 +1,14 @@
+[Unit]
+Description=Home Station local PostgreSQL database
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=msnijder
+WorkingDirectory=/home/msnijder/centrale_server
+ExecStart=/usr/bin/node /home/msnijder/centrale_server/scripts/local-db.js start
+ExecStop=/usr/bin/node /home/msnijder/centrale_server/scripts/local-db.js stop
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Home Station web application
+Requires=homestation-db.service
+After=homestation-db.service
+
+[Service]
+Type=simple
+User=msnijder
+WorkingDirectory=/home/msnijder/centrale_server
+ExecStart=/usr/bin/node /home/msnijder/centrale_server/node.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
