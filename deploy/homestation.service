@@ -1,8 +1,8 @@
-# Laat systemd de Node-server beheren en eerst de database starten.
+# Laat systemd de Node-server pas na de database en MQTT-broker starten.
 [Unit]
 Description=Home Station web application
-Requires=homestation-db.service
-After=homestation-db.service
+Requires=homestation-db.service homestation-mosquitto.service
+After=homestation-db.service homestation-mosquitto.service
 
 [Service]
 Type=simple

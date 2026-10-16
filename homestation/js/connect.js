@@ -9,8 +9,11 @@ const endpointElement = document.getElementById("endpoint");
 const headerExampleElement = document.getElementById("headerExample");
 const arduinoCodeElement = document.getElementById("arduinoCode");
 const connectError = document.getElementById("connectError");
-// Neem dezelfde computer als de website als uitgangspunt; de broker kan elders draaien.
-serverUrlInput.value = `mqtt://${new URL(window.location.origin).hostname}:1883`;
+// Neem dezelfde computer als de website als uitgangspunt; een HTTPS-site gebruikt de TLS-broker.
+const pageUrl = new URL(window.location.origin);
+serverUrlInput.value = pageUrl.protocol === "https:"
+    ? `mqtts://${pageUrl.hostname}:8883`
+    : `mqtt://${pageUrl.hostname}:1883`;
 // Vul gegevens uit een registratie in dezelfde browsersessie automatisch in.
 try {
     stationIdInput.value = sessionStorage.getItem("stationId") || "";
@@ -34,7 +37,7 @@ function generateCode() {
         return;
     }
     // Het brokeradres bevat alleen protocol, host en eventueel poort.
-    // Gebruikersnaam en wachtwoord worden via de aparte velden ingevuld.
+    // Gebruikersnaam wordt aan het station-ID gekoppeld voor de Mosquitto topic-ACL.
     let base;
     try {
         base = new URL(serverUrlInput.value.trim());
@@ -52,8 +55,12 @@ function generateCode() {
     const secure = base.protocol === "mqtts:";
     const port = Number(base.port || (secure ? 8883 : 1883));
     const topicBase = `homestation/${stationId}/`;
-    const username = document.getElementById("mqttUsernameInput").value;
+    const username = stationId;
     const password = document.getElementById("mqttPasswordInput").value;
+    if (secure && !password) {
+        connectError.textContent = "Vul het MQTT-wachtwoord in dat bij jouw Station ID hoort.";
+        return;
+    }
     endpointElement.textContent = ["temperature", "humidity", "windSpeed", ...customSlugs.map(slug => "custom/" + slug)].map(metric => topicBase + metric).join("\n");
     headerExampleElement.textContent = JSON.stringify({ apiKey, value: 20.4 }, null, 2);
     const tls = secure ? `#include <WiFiClientSecure.h>

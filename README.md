@@ -36,9 +36,9 @@ The included Compose file starts a local Mosquitto development broker. Requires 
 docker compose -f Docker-compose.yml up -d
 ```
 
-1. Start the database and Node server. Open the website at `http://YOUR_LAN_IP:3001`.
+1. Start the database, broker and Node server. Open the website at `http://YOUR_LAN_IP:3001`.
 2. Register a station, then open **Hoe verstuur ik data?**.
-3. Enter the broker address reachable from the ESP32, such as `mqtt://192.168.1.10:1883`, and optional broker credentials. The broker can run on a different computer from the website.
+3. Enter the broker address reachable from the ESP32, such as `mqtt://192.168.1.10:1883`. The local development broker does not need an MQTT password. The broker can run on a different computer from the website.
 4. Install the Arduino library **PubSubClient** by Nick O’Leary and generate your code.
 5. Add the snippet to your existing sketch. Call `setupHomeStationMqtt()` in `setup()`, `loopHomeStationMqtt()` on every `loop()`, and periodically call `sendHomeStationData(temperature, humidity, windSpeed)`. Keep calling the MQTT loop between measurements to maintain the connection.
 
@@ -54,11 +54,11 @@ Every message contains JSON, for example `{"apiKey":"YOUR_STATION_API_KEY","valu
 
 Publish without retain. Retained messages replayed on subscription are ignored, so reconnecting does not make old data appear fresh. The generated ESP32 code publishes at QoS 0; a successful publish indicates transmission to the broker, not confirmation of database storage. Measurements sent while the subscriber is offline are not queued for later storage. The map still fetches data over HTTP every 15 seconds. Station registration remains an HTTP request; the HTTP `PUT /api/stations/:id/current` measurement endpoint has been removed.
 
-The bundled anonymous broker is for local development on a trusted network: other clients with broker access can read payloads, including API keys. For a public deployment, configure broker authentication, topic ACLs, and TLS before exposing it. Station clients should only publish to their own three topics; the server account should subscribe to `homestation/+/temperature`, `homestation/+/humidity`, and `homestation/+/windSpeed`. Use `mqtts://broker.example.com:8883` in the ESP32 generator, supply the broker's root CA, and synchronize the ESP32 clock with NTP. For the Node subscriber, `mqtts://` uses the system trust store; a private CA can be provided through `NODE_EXTRA_CA_CERTS`.
+The bundled anonymous broker is for local development on a trusted network: other clients with broker access can read payloads, including API keys. It binds to `127.0.0.1` by default. Do not expose it to the internet. For public MQTT, use `Docker-compose.public.yml`: it provides TLS on port 8883, disables anonymous access, and applies `deploy/mosquitto-public.acl`. Give every station a broker account whose username is exactly its Station ID; the ACL limits it to publishing only under that station's topics. The separate `homestation_ingest` account used by Node can only read station topics. Use `mqtts://broker.example.com:8883` in the ESP32 generator, enter that station's broker password, supply the broker certificate's root CA, and synchronize the ESP32 clock via NTP. For Node, `mqtts://` uses the operating system's trusted certificate authorities.
 
 ## Station account and history
 
-Open **Mijn account** (`/account.html`) and log in with your current station name and API key. Names are matched without case sensitivity; the API key distinguishes stations with the same name. You can update your name, latitude and longitude. Changing the name also changes the station ID to a lowercase topic key derived from the new name. A conflicting ID is rejected without changing the account. Updating only the location preserves the ID. The API key, sessions, measurements and history are preserved. After renaming, update the ESP32 station ID and any broker ACLs to the new MQTT topics; old topics no longer accept data for this station. The account page shows the new ID and passes it to the code generator. Use the new name for subsequent logins.
+Open **Mijn account** (`/account.html`) and log in with your current station name and API key. Names are matched without case sensitivity; the API key distinguishes stations with the same name. You can update your name, latitude and longitude. Changing the name also changes the station ID to a lowercase topic key derived from the new name. A conflicting ID is rejected without changing the account. Updating only the location preserves the ID. The API key, sessions, measurements and history are preserved. After renaming, update the ESP32 station ID and any broker credentials to the new Station ID (the public broker username is the Station ID); old topics no longer accept data for this station. The account page shows the new ID and passes it to the code generator. Use the new name for subsequent logins.
 
 The browser receives an HttpOnly, SameSite=Strict session cookie valid for eight hours. Only a hash of the session token is stored in PostgreSQL. Logout invalidates the session on the server. In production behind an HTTPS proxy, set `COOKIE_SECURE=true` in `.env` so the browser only transmits the cookie over HTTPS.
 
@@ -88,18 +88,55 @@ Install Node.js and PostgreSQL on the server, copy the project, install dependen
 
 The Nginx configuration in `deploy/nginx.conf.example` forwards the website and `/api` to Node on port 3001. Adjust its IP/domain, install it as your Nginx site, validate with `nginx -t`, and reload Nginx. Configure HTTPS before sending real API keys over the internet. The public IP in the example is the one from the original code; verify that it belongs to your server. Nothing in this repository deploys to that machine automatically.
 
+For an internet-accessible MQTT broker, create a DNS name (for example, `mqtt.example.com`) pointing to the server and obtain a valid TLS certificate for that name. Copy the certificate chain to `.local/mosquitto/certs/fullchain.pem` and its private key to `.local/mosquitto/certs/privkey.pem`; never commit these files. Ensure the Mosquitto container can read the certificate and key. Create the password file and add the Node subscriber account interactively:
+
+```sh
+mkdir -p .local/mosquitto/certs
+touch .local/mosquitto/passwords
+sudo chown 1883:1883 .local/mosquitto/passwords .local/mosquitto/certs/privkey.pem
+sudo chmod 600 .local/mosquitto/passwords .local/mosquitto/certs/privkey.pem
+sudo chmod 644 .local/mosquitto/certs/fullchain.pem
+sudo docker compose -p homestation-public -f Docker-compose.public.yml run --rm --no-deps --entrypoint mosquitto_passwd mosquitto -c /mosquitto/config/passwords homestation_ingest
+```
+
+Add `MQTT_URL=mqtts://mqtt.example.com:8883`, `MQTT_USERNAME=homestation_ingest`, and the same strong password you just entered as `MQTT_PASSWORD` in `.env`. The password is prompted by `mosquitto_passwd`; do not put it on the command line. The app needs a DNS route to this broker name, and the certificate must be trusted by the server. Set `MQTT_TLS_BIND_ADDRESS=0.0.0.0` to listen on the public interfaces. Open inbound TCP port 8883 in the host and provider firewalls. Do not expose TCP port 1883 publicly.
+
+After registering a station, create its broker user with the exact Station ID as the username and a unique password:
+
+```sh
+sudo docker compose -p homestation-public -f Docker-compose.public.yml run --rm --no-deps --entrypoint mosquitto_passwd mosquitto /mosquitto/config/passwords STATION_ID
+```
+
+The account page's ESP32 generator uses the Station ID as the MQTT username; enter the matching password there. The broker password file is read when Mosquitto starts, so restart the broker after adding or changing accounts. Renewed certificates must be copied into these files with the same ownership and permissions, then the broker restarted. The systemd deployment uses the secure Compose file and starts the broker before Node.
+
 ### Keep the app running with systemd
 
-The included systemd units are configured for `/home/msnijder/centrale_server` and user `msnijder`. If the project is in a different location or runs as another user, update both unit files first. Install and start them with:
+The included systemd units are configured for `/home/msnijder/centrale_server` and user `msnijder`. They expect Docker installed as a Snap, as on this server. If the project is in a different location, runs as another user, or Docker uses a different service/command path, update the unit files first. Prepare the TLS certificate and password file as described above before starting the public broker. Install and start the units with:
 
 ```sh
 sudo install -m 644 deploy/homestation-db.service /etc/systemd/system/homestation-db.service
+sudo install -m 644 deploy/homestation-mosquitto.service /etc/systemd/system/homestation-mosquitto.service
 sudo install -m 644 deploy/homestation.service /etc/systemd/system/homestation.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now homestation-db.service homestation.service
+sudo systemctl enable --now homestation-db.service homestation-mosquitto.service homestation.service
 ```
 
-The database unit starts the local PostgreSQL cluster; the app unit starts Node after the database and restarts Node if it exits unexpectedly. Check status and logs with `systemctl status homestation-db homestation` and `journalctl -u homestation -f`. To stop both services, run `sudo systemctl stop homestation homestation-db`.
+The database unit starts the local PostgreSQL cluster; the Mosquitto unit starts the broker container; the app starts after both and restarts Node if it exits unexpectedly. Check status with `sudo systemctl status homestation-db homestation-mosquitto homestation`, view broker logs with `sudo docker compose -p homestation-public -f Docker-compose.public.yml logs -f mosquitto`, and view app logs with `sudo journalctl -u homestation -f`. To stop the Home Station services, run `sudo systemctl stop homestation homestation-mosquitto homestation-db`.
+
+### Update an existing deployment
+
+After publishing the new project version, update the server from the project directory. If the server uses this Git checkout:
+
+```sh
+cd /home/msnijder/centrale_server
+git pull --ff-only
+npm ci
+npm run db:setup
+sudo systemctl restart homestation-mosquitto homestation
+sudo systemctl status homestation-db homestation-mosquitto homestation --no-pager
+```
+
+`db:setup` applies the current schema to the database configured in `.env`, preserving existing station data. Run it after an update that changes `schema.sql`; restarting the services updates/restarts the broker container and loads the updated Node code. If files are copied to the server by another deployment method, copy the new project files first, then run the same commands starting at `npm ci`. These steps do not configure or reload Nginx.
 
 ## Checks
 

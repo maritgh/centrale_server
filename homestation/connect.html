@@ -59,8 +59,11 @@
 
         <!-- Brokergegevens staan los van de API-key waarmee de server het station controleert. -->
         <label for="serverUrlInput">MQTT-brokeradres</label>
-        <input type="url" id="serverUrlInput" placeholder="mqtt://192.168.1.10:1883">
-        <p>Gebruik een adres dat jouw ESP32 via WiFi kan bereiken. Voor een lokale broker is dit het LAN-IP van je computer met poort 1883. Gebruik mqtts:// voor TLS.</p>
+        <input type="url" id="serverUrlInput" placeholder="mqtts://mqtt.example.com:8883">
+        <p>Gebruik het brokeradres dat jouw ESP32 kan bereiken. Voor een openbare broker gebruik je mqtts:// en poort 8883.</p>
+        <label for="mqttPasswordInput">MQTT-wachtwoord</label>
+        <input type="password" id="mqttPasswordInput" autocomplete="off">
+        <p>De MQTT-gebruikersnaam is je Station ID. Vraag het brokerwachtwoord aan de beheerder. Dit is niet je API-key.</p>
         <label for="customMetricInput">Eigen topicsleutels (optioneel)</label>
         <input id="customMetricInput" placeholder="luchtdruk, lichtsterkte">
         <p>Maak eigen grootheden eerst aan in Mijn account. Vul de sleutels in, gescheiden door komma’s.</p>
