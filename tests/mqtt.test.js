@@ -12,6 +12,9 @@ test("MQTT rejects malformed, oversized, retained and out-of-range readings befo
   for (const [topic, body, packet] of [
     ["other/test/temperature", payload(20)],
     ["homestation/test/unknown", payload(20)],
+    ["homestation/test/custom/Bad", payload(20)],
+    ["homestation/test/custom/lucht/druk", payload(20)],
+    ["homestation/test/custom/luchtdruk", payload("1013")],
     ["homestation/test/temperature/extra", payload(20)],
     ["homestation/test/temperature", Buffer.from("{")],
     ["homestation/test/temperature", Buffer.from("null")],
@@ -34,7 +37,7 @@ test("MQTT accepts zero and boundary values and rejects unknown credentials", as
   const pool = { async query(sql, args) { calls.push(args); return { rowCount: 1 }; } };
   for (const [metric, value] of [["temperature", -20], ["humidity", 0], ["humidity", 100], ["windSpeed", 0]]) {
     assert.equal(await storeMqttReading(pool, `homestation/test/${metric}`, payload(value)), true);
-    assert.deepEqual(calls.at(-1), ["test", apiKey, value]);
+    assert.deepEqual(calls.at(-1), ["test", apiKey, value, metric]);
   }
   assert.equal(await storeMqttReading({ query: async () => ({ rowCount: 0 }) }, "homestation/test/temperature", payload(20)), false);
 });
@@ -53,7 +56,7 @@ test("MQTT subscribes on reconnect and completes messages after database process
   // De tweede connect-gebeurtenis stelt een herstelde verbinding voor.
   client.emit("connect");
   client.emit("connect");
-  assert.deepEqual(subscriptions, Array(2).fill(["homestation/+/temperature", "homestation/+/humidity", "homestation/+/windSpeed"]));
+  assert.deepEqual(subscriptions, Array(2).fill(["homestation/+/temperature", "homestation/+/humidity", "homestation/+/windSpeed", "homestation/+/custom/+"]));
   let completed = false;
   client.handleMessage({ topic: "homestation/test/temperature", payload: payload(20) }, () => { completed = true; });
   assert.equal(completed, false);

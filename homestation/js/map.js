@@ -19,6 +19,10 @@ function stationPopup(station) {
         `Windsnelheid: ${station.wind_speed == null ? "Geen data" : station.wind_speed + " m/s"}`,
         `Laatste update: ${station.updated_at ? new Date(station.updated_at).toLocaleString("nl-NL") : "Nog geen meting"}`
     ];
+    // Eigen grootheden hebben dezelfde veilige tekstweergave als de vaste metingen.
+    for (const metric of station.custom_metrics || []) {
+        lines.push(`${metric.name}: ${metric.value == null ? "Geen data" : metric.value + " " + metric.unit}`);
+    }
     for (const text of lines) {
         const line = document.createElement("div");
         line.textContent = text;

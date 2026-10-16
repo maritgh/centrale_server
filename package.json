@@ -5,6 +5,8 @@
   "description": "Home Station website and PostgreSQL weather API",
   "scripts": {
     "setup": "node scripts/setup.js",
+    "admin:setup": "node scripts/admin-setup.js",
+    "admin:start": "npm run admin:setup && npm start",
     "start": "node node.js",
     "db:start": "node scripts/local-db.js start",
     "db:stop": "node scripts/local-db.js stop",

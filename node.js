@@ -1,22 +1,21 @@
-// Lees server-, database- en brokerinstellingen uit .env.
-require("dotenv").config({ quiet: true });
+// Lees altijd de .env naast deze server, ook wanneer Node vanuit een andere map start.
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env"), quiet: true });
 const express = require("express");
 const { Pool } = require("pg");
 const crypto = require("crypto");
-const path = require("path");
+const { createAdminRouter } = require("./admin");
+const { createAccountRouter } = require("./account");
+const { createStationId } = require("./station-id");
 const { startMqtt } = require("./mqtt");
 
 // Accepteer alleen echte, eindige getallen binnen het opgegeven bereik.
 function validNumber(value, min = -Infinity, max = Infinity) {
   return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
 }
-// Maak van de stationsnaam een ID dat ook als onderdeel van een MQTT-topic bruikbaar is.
-function createStationId(name) {
-  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "station";
-}
 // HTTP verzorgt de website, registratie en het ophalen van stations.
 // Nieuwe meetgegevens komen binnen via de MQTT-verbinding in mqtt.js.
-function createApp({ pool, classCode }) {
+function createApp({ pool, classCode, adminUsername = process.env.ADMIN_USERNAME, adminPassword = process.env.ADMIN_PASSWORD }) {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "16kb" }));
@@ -66,12 +65,20 @@ function createApp({ pool, classCode }) {
     try {
       const result = await pool.query(
         `SELECT s.id, s.name, s.latitude, s.longitude,
-                c.temperature, c.humidity, c.wind_speed, c.extra, c.updated_at
+                c.temperature, c.humidity, c.wind_speed, c.extra, c.updated_at,
+                COALESCE((SELECT json_agg(json_build_object(
+                  'slug', m.slug, 'name', m.name, 'unit', m.unit, 'value', r.value, 'updated_at', r.updated_at) ORDER BY m.name)
+                  FROM custom_metrics m LEFT JOIN custom_readings r
+                    ON r.station_id = m.station_id AND r.slug = m.slug
+                  WHERE m.station_id = s.id), '[]'::json) AS custom_metrics
          FROM stations s LEFT JOIN current_readings c ON c.station_id = s.id ORDER BY s.name`
       );
       res.json(result.rows);
     } catch (error) { next(error); }
   });
+  // Accountbeheer heeft eigen sessiecontrole voor profiel en meetgeschiedenis.
+  app.use("/api/admin", createAdminRouter({ pool, username: adminUsername, password: adminPassword }));
+  app.use("/api/account", createAccountRouter({ pool }));
   app.use("/api", (req, res) => res.status(404).json({ error: "API-route niet gevonden" }));
   app.use(express.static(path.join(__dirname, "homestation")));
   // Vang fouten uit de routes op en stuur een bruikbare HTTP-status terug.

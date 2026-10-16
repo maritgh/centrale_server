@@ -27,6 +27,12 @@ function generateCode() {
         connectError.textContent = "Vul je Station ID en de API-key van 64 tekens in.";
         return;
     }
+    // Eigen grootheden gebruiken hun vaste, vooraf aangemaakte topicsleutels.
+    const customSlugs = [...new Set(document.getElementById("customMetricInput").value.split(",").map(value => value.trim()).filter(Boolean))];
+    if (customSlugs.length > 50 || customSlugs.some(slug => !/^[a-z][a-z0-9-]{0,39}$/.test(slug))) {
+        connectError.textContent = "Gebruik maximaal 50 eigen topicsleutels van 1–40 kleine letters, cijfers of streepjes; begin met een letter.";
+        return;
+    }
     // Het brokeradres bevat alleen protocol, host en eventueel poort.
     // Gebruikersnaam en wachtwoord worden via de aparte velden ingevuld.
     let base;
@@ -48,7 +54,7 @@ function generateCode() {
     const topicBase = `homestation/${stationId}/`;
     const username = document.getElementById("mqttUsernameInput").value;
     const password = document.getElementById("mqttPasswordInput").value;
-    endpointElement.textContent = ["temperature", "humidity", "windSpeed"].map(metric => topicBase + metric).join("\n");
+    endpointElement.textContent = ["temperature", "humidity", "windSpeed", ...customSlugs.map(slug => "custom/" + slug)].map(metric => topicBase + metric).join("\n");
     headerExampleElement.textContent = JSON.stringify({ apiKey, value: 20.4 }, null, 2);
     const tls = secure ? `#include <WiFiClientSecure.h>
 // Vul het PEM-rootcertificaat van de broker in en synchroniseer de klok via NTP.
@@ -113,6 +119,16 @@ bool publishHomeStationValue(const char* metric, float value) {
   return mqttClient.publish(topic.c_str(), payload.c_str(), false);
 }
 
+// Geef een echte sensorwaarde in de bijbehorende eenheid door. De server controleert de topicsleutel.
+void sendHomeStationCustomData(const char* slug, float value) {
+  if (!isfinite(value)) return;
+  loopHomeStationMqtt();
+  if (!mqttClient.connected()) return;
+  String metric = String("custom/") + slug;
+  if (!publishHomeStationValue(metric.c_str(), value)) Serial.println("Eigen meting verzenden mislukt");
+}
+${customSlugs.map(slug => `// Voorbeeld: sendHomeStationCustomData(${JSON.stringify(slug)}, customValue_${slug.replace(/-/g, "_")});`).join("\n")}
+
 // Roep deze functie periodiek aan met temperatuur in °C, vochtigheid in % en wind in m/s.
 void sendHomeStationData(float temperature, float humidity, float windSpeed) {
   if (!isfinite(temperature) || !isfinite(humidity) || !isfinite(windSpeed) ||
@@ -154,4 +170,10 @@ copyButton.addEventListener("click", async () => {
         connectError.textContent = "Automatisch kopiëren is niet gelukt. Selecteer en kopieer de code hieronder.";
     }
 });
+// Het account kan alleen de topicsleutels doorgeven via een link; nooit de API-key.
+const requestedParams = new URL(window.location.href || window.location.origin).searchParams;
+const requestedStationId = requestedParams.get("station");
+if (requestedStationId && /^[a-z0-9-]{1,100}$/.test(requestedStationId)) stationIdInput.value = requestedStationId;
+const requestedCustomSlugs = requestedParams.get("custom");
+if (requestedCustomSlugs) document.getElementById("customMetricInput").value = requestedCustomSlugs;
 if (stationIdInput.value && apiKeyInput.value) generateCode();

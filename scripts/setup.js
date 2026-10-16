@@ -6,7 +6,8 @@ const root = path.join(__dirname, "..");
 try {
   const content = fs.readFileSync(path.join(root, ".env.example"), "utf8")
     .replace("DB_PASSWORD=replace_me", `DB_PASSWORD=${crypto.randomBytes(24).toString("hex")}`)
-    .replace("CLASS_CODE=replace_me", `CLASS_CODE=${crypto.randomBytes(8).toString("hex")}`);
+    .replace("CLASS_CODE=replace_me", `CLASS_CODE=${crypto.randomBytes(8).toString("hex")}`)
+    .replace("ADMIN_PASSWORD=", `ADMIN_PASSWORD=${crypto.randomBytes(24).toString("hex")}`);
   // wx voorkomt overschrijven; 0o600 geeft alleen de eigenaar lees- en schrijfrechten.
   fs.writeFileSync(path.join(root, ".env"), content, { flag: "wx", mode: 0o600 });
   console.log("Created .env. Your registration class code is in that file.");

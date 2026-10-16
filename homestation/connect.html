@@ -21,6 +21,7 @@
         <a href="/">Weerkaart</a>
         <a href="/register.html">Station aanmelden</a>
         <a href="/connect.html">Hoe verstuur ik data?</a>
+        <a href="/account.html">Mijn account</a>
     </nav>
 </header>
 
@@ -60,10 +61,9 @@
         <label for="serverUrlInput">MQTT-brokeradres</label>
         <input type="url" id="serverUrlInput" placeholder="mqtt://192.168.1.10:1883">
         <p>Gebruik een adres dat jouw ESP32 via WiFi kan bereiken. Voor een lokale broker is dit het LAN-IP van je computer met poort 1883. Gebruik mqtts:// voor TLS.</p>
-        <label for="mqttUsernameInput">Brokergebruikersnaam (optioneel)</label>
-        <input id="mqttUsernameInput" type="text" autocomplete="off">
-        <label for="mqttPasswordInput">Brokerwachtwoord (optioneel)</label>
-        <input id="mqttPasswordInput" type="password" autocomplete="off">
+        <label for="customMetricInput">Eigen topicsleutels (optioneel)</label>
+        <input id="customMetricInput" placeholder="luchtdruk, lichtsterkte">
+        <p>Maak eigen grootheden eerst aan in Mijn account. Vul de sleutels in, gescheiden door komma’s.</p>
         <p id="connectError" class="error" role="alert"></p>
 
         <button id="generateButton" class="button" type="button">
@@ -104,6 +104,7 @@
             </p>
 
             <p>Roep <code>setupHomeStationMqtt()</code> aan in <code>setup()</code> en <code>loopHomeStationMqtt()</code> bij iedere <code>loop()</code>. Verstuur vervolgens periodiek je metingen:</p>
+            <p>Voor eigen grootheden gebruik je <code>sendHomeStationCustomData("luchtdruk", gemetenLuchtdruk)</code>. De waarde komt uit jouw sensorcode; de gegenereerde code leest geen sensor uit.</p>
             <pre>sendHomeStationData(
     temperature,
     humidity,
