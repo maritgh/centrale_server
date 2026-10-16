@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn account — Home Station</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+    <div><h1>Home Station Network</h1><p>Beheer je station en bekijk je metingen</p></div>
+    <nav>
+        <a href="/">Weerkaart</a>
+        <a href="/register.html">Station aanmelden</a>
+        <a href="/connect.html">Hoe verstuur ik data?</a>
+        <a href="/account.html" aria-current="page">Mijn account</a>
+        <a href="/admin.html">Beheer</a>
+        <!-- Alleen zichtbaar als de server een geldige stationssessie bevestigt. -->
+        <button id="logoutButton" class="button secondary hidden" type="button">Uitloggen</button>
+    </nav>
+</header>
+<main>
+    <!-- De API bepaalt of er een geldige sessie is; verborgen inhoud bevat geen accountgegevens. -->
+    <p id="accountStatus" role="status">Account laden…</p>
+    <p id="accountError" class="error" role="alert"></p>
+    <section id="loginSection" class="register-card hidden">
+        <h2>Inloggen</h2>
+        <p>Gebruik de naam van je station en de API-key die je bij registratie hebt ontvangen.</p>
+        <form id="loginForm">
+            <label for="loginName">Stationsnaam</label>
+            <input id="loginName" name="username" autocomplete="username" maxlength="120" required>
+            <label for="loginApiKey">API-key</label>
+            <input id="loginApiKey" type="password" name="password" autocomplete="current-password" pattern="[a-f0-9]{64}" required>
+            <button class="button" type="submit">Inloggen</button>
+        </form>
+    </section>
+    <section id="accountSection" class="hidden">
+        <section class="register-card">
+            <h2 id="accountTitle">Mijn station</h2>
+            <p>Station ID: <code id="accountStationId"></code></p>
+            <p>Bij een nieuwe naam verandert ook je station-ID. Je API-key en opgeslagen metingen blijven behouden. Pas daarna je ESP32 aan naar de nieuwe MQTT-topics.</p>
+            <form id="profileForm">
+                <label for="profileName">Stationsnaam</label>
+                <input id="profileName" maxlength="120" required>
+                <label for="profileLatitude">Latitude</label>
+                <input id="profileLatitude" type="number" min="-90" max="90" step="any" required>
+                <label for="profileLongitude">Longitude</label>
+                <input id="profileLongitude" type="number" min="-180" max="180" step="any" required>
+                <button class="button" type="submit">Wijzigingen opslaan</button>
+            </form>
+        </section>
+        <!-- Een grootheid beschrijft een numerieke sensorwaarde; de ESP32 levert de echte metingen. -->
+        <section class="register-card">
+            <h2>Eigen grootheden</h2>
+            <p>Voeg bijvoorbeeld luchtdruk in hPa, lichtsterkte in lux of bodemvocht in % toe.</p>
+            <form id="metricForm">
+                <label for="metricName">Naam</label>
+                <input id="metricName" maxlength="80" placeholder="Luchtdruk" required>
+                <label for="metricUnit">Eenheid</label>
+                <input id="metricUnit" maxlength="20" placeholder="hPa" required>
+                <label for="metricSlug">Topicsleutel</label>
+                <input id="metricSlug" maxlength="40" pattern="[a-z][a-z0-9-]{0,39}" placeholder="luchtdruk" required>
+                <small>Begin met een kleine letter. Gebruik daarna kleine letters, cijfers en streepjes. De sleutel blijft vast.</small>
+                <button class="button" type="submit">Grootheid toevoegen</button>
+            </form>
+            <p id="metricsStatus" role="status"></p>
+            <p>Verwijderen wist ook de actuele waarde en de meetgeschiedenis van die grootheid. Je krijgt eerst een bevestiging.</p>
+            <ul id="customMetricsList"></ul>
+            <p>Gebruik het getoonde topic met een bericht zoals <code>{"apiKey":"jouw-api-key","value":1013.2}</code>.</p>
+            <p>Vul je topicsleutels ook in bij <a id="customCodeLink" href="/connect.html">Hoe verstuur ik data?</a> om de ESP32-voorbeelden te genereren. Koppel een passende sensor en geef de gemeten waarde door.</p>
+        </section>
+        <!-- Metingen staan per topic in de geschiedenis, met de ontvangsttijd op de server. -->
+        <section class="history-card">
+            <h2>Mijn meetgeschiedenis</h2>
+            <p>Nieuwe metingen worden bewaard vanaf de invoering van deze geschiedenis. Eerdere meetreeksen zijn niet beschikbaar.</p>
+            <div class="history-controls">
+                <label for="historyMetric">Meetwaarde</label>
+                <select id="historyMetric">
+                    <option value="">Alle meetwaarden</option>
+                    <option value="temperature">Temperatuur</option>
+                    <option value="humidity">Luchtvochtigheid</option>
+                    <option value="windSpeed">Windsnelheid</option>
+                </select>
+                <button id="refreshHistory" class="button secondary" type="button">Verversen</button>
+            </div>
+            <p id="historyStatus" role="status"></p>
+            <div class="table-scroll">
+                <table>
+                    <caption>Ontvangen metingen, nieuwste eerst</caption>
+                    <thead><tr><th scope="col">Ontvangen op</th><th scope="col">Meetwaarde</th><th scope="col">Waarde</th></tr></thead>
+                    <tbody id="historyRows"></tbody>
+                </table>
+            </div>
+            <button id="moreHistory" class="button secondary hidden" type="button">Oudere metingen laden</button>
+        </section>
+    </section>
+</main>
+<script src="/js/account.js"></script>
+</body>
+</html>

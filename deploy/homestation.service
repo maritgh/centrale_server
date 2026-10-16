@@ -1,3 +1,4 @@
+# Laat systemd de Node-server beheren en eerst de database starten.
 [Unit]
 Description=Home Station web application
 Requires=homestation-db.service
@@ -5,11 +6,14 @@ After=homestation-db.service
 
 [Service]
 Type=simple
+# Pas gebruiker en projectpaden aan voor de machine waarop je deze unit installeert.
 User=msnijder
 WorkingDirectory=/home/msnijder/centrale_server
 ExecStart=/usr/bin/node /home/msnijder/centrale_server/node.js
+# Start de toepassing na een fout opnieuw, met vijf seconden wachttijd.
 Restart=on-failure
 RestartSec=5
 
+# Koppel deze service bij inschakelen aan de normale serverstart.
 [Install]
 WantedBy=multi-user.target

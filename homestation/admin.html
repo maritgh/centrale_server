@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beheer — Home Station</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+    <div><h1>Home Station Network</h1><p>Stationsbeheer</p></div>
+    <nav><a href="/">Weerkaart</a><a href="/account.html">Mijn account</a><a href="/admin.html" aria-current="page">Beheer</a>
+        <button id="adminLogout" type="button" class="button secondary hidden">Uitloggen als beheerder</button>
+    </nav>
+</header>
+<main>
+    <p id="adminStatus" role="status">Beheer laden…</p>
+    <p id="adminError" class="error" role="alert"></p>
+    <!-- De pagina bevat geen sleutels: de server levert ze alleen na een geldige adminlogin. -->
+    <section id="adminLoginSection" class="register-card hidden">
+        <h2>Inloggen als beheerder</h2>
+        <p>Gebruik je aparte beheerinloggegevens. Een stationsnaam en API-key geven hier geen toegang.</p>
+        <form id="adminLoginForm">
+            <label for="adminUsername">Beheerdersnaam</label>
+            <input id="adminUsername" name="username" maxlength="120" autocomplete="username" required>
+            <label for="adminPassword">Beheerwachtwoord</label>
+            <input id="adminPassword" name="password" type="password" maxlength="1024" autocomplete="current-password" required>
+            <button type="submit" class="button">Inloggen</button>
+        </form>
+    </section>
+    <section id="adminPanel" class="history-card hidden">
+        <h2>Stations en accounts</h2>
+        <p>Bekijk een vergeten API-key of verwijder een station. Verwijderen wist ook alle metingen, eigen grootheden en accountsessies van dat station.</p>
+        <form id="adminSearchForm">
+            <label for="adminSearch">Zoek op naam of station-ID</label>
+            <input id="adminSearch" type="search" maxlength="120" placeholder="Stationsnaam of ID">
+            <button type="submit" class="button">Zoeken / verversen</button>
+        </form>
+        <p id="adminListStatus" role="status"></p>
+        <div class="table-scroll">
+            <table>
+                <caption>Geregistreerde stations</caption>
+                <thead><tr><th scope="col">Naam</th><th scope="col">Station ID</th><th scope="col">Locatie</th><th scope="col">Beheer</th></tr></thead>
+                <tbody id="adminRows"></tbody>
+            </table>
+        </div>
+        <button id="adminMore" type="button" class="button secondary hidden">Meer stations laden</button>
+    </section>
+</main>
+<script src="/js/admin.js"></script>
+</body>
+</html>

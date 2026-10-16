@@ -21,6 +21,7 @@
         <a href="/">Weerkaart</a>
         <a href="/register.html">Station aanmelden</a>
         <a href="/connect.html">Hoe verstuur ik data?</a>
+        <a href="/account.html">Mijn account</a>
     </nav>
 </header>
 <main>
@@ -34,6 +35,7 @@
             Je ontvangt daarna automatisch een Station ID en API-key.
         </p>
 
+        <!-- De browser controleert verplichte velden en bereiken; de server valideert opnieuw. -->
         <form id="registerForm">
 
             <label for="name">Naam</label>
@@ -85,8 +87,10 @@
 
         </form>
 
+        <!-- register.js vult dit element als registratie mislukt; role=alert meldt dit aan schermlezers. -->
         <p id="errorMessage" class="error" role="alert"></p>
 
+<!-- Wordt pas zichtbaar na registratie. De gebruiker kan hier de eigen gegevens bewaren. -->
 <section id="result" class="result hidden">
 
     <h2>✅ Station aangemaakt!</h2>
@@ -108,9 +112,10 @@
 
     <p>
         De volgende pagina laat zien hoe je met jouw ESP32
-        een PUT-request naar de server verstuurt.
+        meetgegevens via losse MQTT-topics verstuurt.
     </p>
 
+    <p><a href="/account.html">Log in om je naam, locatie en meetgeschiedenis te beheren</a></p>
     <a href="/connect.html" class="button">
         Bekijk hoe je data verstuurt
     </a>
@@ -121,6 +126,7 @@
 
 </main>
 
+<!-- Het script koppelt het formulier aan de registratie-API en vult het resultaat in. -->
 <script src="/js/register.js"></script>
 
 </body>

@@ -6,6 +6,7 @@
 
     <title>Home Station Network</title>
 
+    <!-- Leaflet levert de stijlen en scripts voor de interactieve weerkaart. -->
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -15,6 +16,7 @@
 </head>
 
 <body>
+<!-- De navigatie is op alle pagina’s gelijk. -->
 <header>
     <div>
         <h1>Home Station Network</h1>
@@ -25,6 +27,7 @@
         <a href="/">Weerkaart</a>
         <a href="/register.html">Station aanmelden</a>
         <a href="/connect.html">Hoe verstuur ik data?</a>
+        <a href="/account.html">Mijn account</a>
     </nav>
 </header>
 
@@ -37,6 +40,7 @@
         </p>
     </section>
 
+    <!-- map.js vult de status en de kaart na het ophalen van de stations. -->
     <p id="mapStatus" role="status">Stations laden…</p>
     <div id="map"></div>
 
@@ -46,6 +50,7 @@
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
 </script>
 
+<!-- Laad de eigen kaartcode nadat zowel de HTML als Leaflet beschikbaar is. -->
 <script src="/js/map.js"></script>
 
 </body>

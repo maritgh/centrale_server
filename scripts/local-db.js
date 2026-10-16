@@ -6,6 +6,7 @@ const { spawnSync } = require("child_process");
 const { setupDatabase } = require("./database");
 const root = path.join(__dirname, "..", ".local");
 const data = path.join(root, "postgres");
+// Zoek de PostgreSQL-programma's ook als ze niet rechtstreeks in PATH staan.
 const pgConfig = spawnSync("pg_config", ["--bindir"], { encoding: "utf8" });
 const postgresBin = !pgConfig.error && pgConfig.status === 0 ? pgConfig.stdout.trim() : "";
 function run(command, args, allowFailure = false) {
@@ -32,15 +33,18 @@ async function main() {
     throw new Error("Run npm run setup and check your database settings first.");
   }
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
+  // Initialiseer alleen bij de eerste start; een bestaande cluster bevat de bewaarde data.
   if (!fs.existsSync(path.join(data, "PG_VERSION"))) {
     const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "homestation-password-"));
     try {
+      // Geef initdb het wachtwoord via een afgeschermd tijdelijk bestand, niet als argument.
       const passwordFile = path.join(temporary, "password");
       fs.writeFileSync(passwordFile, process.env.DB_PASSWORD + "\n", { mode: 0o600 });
       run("initdb", ["-D", data, "-U", process.env.DB_USER, "--pwfile", passwordFile, "--auth=scram-sha-256", "--encoding=UTF8"]);
       fs.appendFileSync(path.join(data, "postgresql.conf"), `\nlisten_addresses = '127.0.0.1'\nport = ${Number(process.env.DB_PORT)}\nunix_socket_directories = '${root.replace(/'/g, "''")}'\n`);
     } finally { fs.rmSync(temporary, { recursive: true, force: true }); }
   }
+  // Start alleen als de cluster nog niet draait; pas daarna het databaseschema toe.
   if (run("pg_ctl", ["-D", data, "status"], true).status !== 0) {
     run("pg_ctl", ["-D", data, "-l", path.join(root, "postgres.log"), "-w", "start"]);
   }

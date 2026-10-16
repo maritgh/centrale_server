@@ -9,6 +9,7 @@ const apiKeyElement = document.getElementById("apiKey");
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector('button[type="submit"]');
+    // Voorkom dubbele registraties wanneer iemand meerdere keren op verzenden klikt.
     if (button.disabled) return;
     button.disabled = true;
 
@@ -27,6 +28,7 @@ form.addEventListener("submit", async (event) => {
     };
 
     try {
+        // Registratie verloopt via HTTP; sensormetingen worden daarna via MQTT verstuurd.
         const response = await fetch("/api/register", {
             method: "POST",
 
@@ -58,7 +60,7 @@ form.addEventListener("submit", async (event) => {
             sessionStorage.setItem("stationId", stationId);
             sessionStorage.setItem("apiKey", apiKey);
         } catch {
-            // Credentials are still visible and can be copied manually.
+            // Bij geblokkeerde browseropslag kan de gebruiker de gegevens nog handmatig kopiëren.
         }
 
         result.classList.remove("hidden");
