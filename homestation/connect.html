@@ -32,8 +32,7 @@
 
         <p>
             Jouw ESP32 stuurt temperatuur, luchtvochtigheid en
-            windsnelheid naar de centrale server met een HTTP
-            PUT-request.
+            windsnelheid via MQTT naar drie afzonderlijke topics.
         </p>
 
         <p>
@@ -42,6 +41,7 @@
             automatisch ingevuld.
         </p>
 
+        <!-- connect.js kan deze stationgegevens overnemen uit de huidige browsersessie. -->
         <label for="stationIdInput">Station ID</label>
         <input
             type="text"
@@ -56,9 +56,14 @@
             placeholder="jouw API-key"
         >
 
-        <label for="serverUrlInput">Serveradres</label>
-        <input type="url" id="serverUrlInput" placeholder="http://192.168.1.10:3001">
-        <p>Gebruik een adres dat jouw ESP32 via WiFi kan bereiken. Voor een lokale server is dit het LAN-IP van je computer met poort 3001.</p>
+        <!-- Brokergegevens staan los van de API-key waarmee de server het station controleert. -->
+        <label for="serverUrlInput">MQTT-brokeradres</label>
+        <input type="url" id="serverUrlInput" placeholder="mqtt://192.168.1.10:1883">
+        <p>Gebruik een adres dat jouw ESP32 via WiFi kan bereiken. Voor een lokale broker is dit het LAN-IP van je computer met poort 1883. Gebruik mqtts:// voor TLS.</p>
+        <label for="mqttUsernameInput">Brokergebruikersnaam (optioneel)</label>
+        <input id="mqttUsernameInput" type="text" autocomplete="off">
+        <label for="mqttPasswordInput">Brokerwachtwoord (optioneel)</label>
+        <input id="mqttPasswordInput" type="password" autocomplete="off">
         <p id="connectError" class="error" role="alert"></p>
 
         <button id="generateButton" class="button" type="button">
@@ -66,42 +71,25 @@
         </button>
 
 
+        <!-- Alleen zichtbaar na geldige invoer; JavaScript vult topics, voorbeeld en Arduino-code. -->
         <section id="codeSection" class="hidden">
 
-            <h2>1. PUT-request</h2>
-
-            <p>
-                Jouw ESP32 verstuurt de meetgegevens naar:
-            </p>
-
+            <h2>1. MQTT-topics</h2>
+            <p>Publiceer één bericht per meetwaarde op het bijbehorende topic:</p>
             <pre id="endpoint"></pre>
-
-            <p>
-                Bij het request stuur je jouw API-key mee:
-            </p>
-
+            <p>Elk bericht is JSON met jouw API-key en één numerieke waarde. Bijvoorbeeld voor temperatuur:</p>
             <pre id="headerExample"></pre>
-
-            <p>
-                De body van het request ziet er bijvoorbeeld zo uit:
-            </p>
-
-            <pre>{
-  "temperature": 20.4,
-  "humidity": 58,
-  "windSpeed": 2.7
-}</pre>
-
+            <p>Publiceer zonder retain. De server bewaart de laatste waarde van elk topic.</p>
 
             <h2>2. ESP32-code</h2>
 
             <p>
                 Voeg onderstaande functie toe aan je Arduino-project.
-                Je ESP32 moet al verbonden zijn met WiFi.
+                Installeer de Arduino-library PubSubClient van Nick O’Leary. Je ESP32 moet al verbonden zijn met WiFi.
             </p>
 
             <pre id="arduinoCode"></pre>
-            <p id="httpsNotice" class="hidden">Voor HTTPS: vervang de certificaat-placeholder in de code door het PEM-rootcertificaat van de server en synchroniseer de ESP32-klok via NTP voordat je data verstuurt.</p>
+            <p id="httpsNotice" class="hidden">Voor MQTT met TLS: vervang de certificaat-placeholder in de code door het PEM-rootcertificaat van de broker en synchroniseer de ESP32-klok via NTP voordat je data verstuurt.</p>
 
             <button id="copyButton" class="button" type="button">
                 Kopieer code
@@ -115,6 +103,7 @@
                 kun je de functie aanroepen met jouw eigen sensorwaarden:
             </p>
 
+            <p>Roep <code>setupHomeStationMqtt()</code> aan in <code>setup()</code> en <code>loopHomeStationMqtt()</code> bij iedere <code>loop()</code>. Verstuur vervolgens periodiek je metingen:</p>
             <pre>sendHomeStationData(
     temperature,
     humidity,
@@ -148,8 +137,7 @@
             </p>
 
             <p>
-                Bij een succesvolle request geeft de server
-                HTTP-code <strong>200</strong> terug.
+                De seriële monitor meldt of het verzenden naar de broker lukt. Dit is geen bevestiging van databaseopslag. De kaart toont ontvangen metingen bij de volgende verversing.
             </p>
 
         </section>
@@ -158,6 +146,7 @@
 
 </main>
 
+<!-- De generator draait in de browser en verstuurt zelf geen sensormetingen. -->
 <script src="/js/connect.js"></script>
 
 </body>

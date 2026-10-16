@@ -8,6 +8,7 @@ function connection(database = process.env.DB_NAME) {
     user: process.env.DB_USER, password: process.env.DB_PASSWORD, connectionTimeoutMillis: 5000 };
 }
 async function setupDatabase({ create = false } = {}) {
+  // Verbind eerst met de standaarddatabase om zo nodig de applicatiedatabase aan te maken.
   if (create) {
     const admin = new Pool(connection("postgres"));
     try {
@@ -19,6 +20,7 @@ async function setupDatabase({ create = false } = {}) {
   }
   const pool = new Pool(connection());
   try {
+    // schema.sql kan opnieuw worden uitgevoerd en bewaart bestaande stations en metingen.
     await pool.query(fs.readFileSync(path.join(__dirname, "..", "schema.sql"), "utf8"));
     console.log("Database tables are ready.");
   } finally { await pool.end(); }

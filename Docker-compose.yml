@@ -1,18 +1,15 @@
+# Start de ontwikkelbroker met: docker compose -f Docker-compose.yml up -d
 services:
   mosquitto:
     image: eclipse-mosquitto:2
-    container_name: mosquitto
-    restart: always
+    restart: unless-stopped
+    # Alleen lokaal bereikbaar, tenzij MQTT_BIND_ADDRESS in .env een LAN-IP bevat.
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "${MQTT_BIND_ADDRESS:-127.0.0.1}:1883:1883"
+    # Configuratie is alleen-lezen; brokerdata blijft in een Docker-volume bewaard.
     volumes:
-      - C:/mosquitto/config:/mosquitto/config
-      - C:/mosquitto/data:/mosquitto/data
-      - C:/mosquitto/log:/mosquitto/log
-    networks:
-      - mqtt_network
+      - ./deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
 
-networks:
-  mqtt_network:
-    driver: bridge
+volumes:
+  mosquitto_data:

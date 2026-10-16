@@ -10,6 +10,7 @@ Requires Node.js 20 or newer and PostgreSQL server tools (`initdb` and `pg_ctl`)
 npm install
 npm run setup
 npm run db:start
+docker compose -f Docker-compose.yml up -d
 npm start
 ```
 
@@ -25,16 +26,35 @@ npm run db:stop
 
 For an existing PostgreSQL database, fill in its connection details in `.env` and run `npm run db:setup` instead. The database must already exist. The schema script creates missing tables; it does not migrate incompatible existing tables.
 
-## Connect an ESP32
+## Connect an ESP32 with MQTT
 
-1. Keep the API running. The default `HOST=0.0.0.0` lets devices on your LAN reach it.
-2. Find your computer's LAN IP in its network settings. Open the website at `http://YOUR_LAN_IP:3000` from the same network as the ESP32.
-3. Register a station, then open **Hoe verstuur ik data?** The server address defaults to the website's origin. You can change it to another reachable server address.
-4. Generate the Arduino code, add it to your ESP32 project, connect to WiFi, and call `sendHomeStationData(temperature, humidity, windSpeed)` with your sensor readings.
+The Node server subscribes to a broker configured by `MQTT_URL` (default `mqtt://127.0.0.1:1883`). Set `MQTT_USERNAME` and `MQTT_PASSWORD` in `.env` if your broker requires authentication. Broker credentials are separate from each station's API key. MQTT.js reconnects and subscribes again automatically.
 
-The function is a snippet for an existing Arduino project, rather than a complete sketch with `setup()` and `loop()`. Temperature uses °C, humidity uses percent (0–100), and wind speed uses m/s (at least 0). The server returns HTTP 200 for accepted readings. The map refreshes every 15 seconds.
+The included Compose file starts a local Mosquitto development broker. Requires Docker running. It binds port 1883 to localhost by default. For ESP32 access on a trusted LAN, set `MQTT_BIND_ADDRESS` in `.env` to your computer's LAN IP and set `MQTT_URL` to `mqtt://THAT_LAN_IP:1883`, then recreate the broker:
 
-For an HTTPS address, the generated code uses `WiFiClientSecure`: supply the server's PEM root CA certificate and synchronize the ESP32 clock via NTP before sending readings. The clipboard button also supports ordinary HTTP pages where the browser permits the fallback copy operation.
+```sh
+docker compose -f Docker-compose.yml up -d
+```
+
+1. Start the database and Node server. Open the website at `http://YOUR_LAN_IP:3001`.
+2. Register a station, then open **Hoe verstuur ik data?**.
+3. Enter the broker address reachable from the ESP32, such as `mqtt://192.168.1.10:1883`, and optional broker credentials. The broker can run on a different computer from the website.
+4. Install the Arduino library **PubSubClient** by Nick O’Leary and generate your code.
+5. Add the snippet to your existing sketch. Call `setupHomeStationMqtt()` in `setup()`, `loopHomeStationMqtt()` on every `loop()`, and periodically call `sendHomeStationData(temperature, humidity, windSpeed)`. Keep calling the MQTT loop between measurements to maintain the connection.
+
+Each measurement has its own topic:
+
+| Topic | Value |
+| --- | --- |
+| `homestation/<naam>/temperature` | Temperature in °C |
+| `homestation/<naam>/humidity` | Humidity from 0 to 100 percent |
+| `homestation/<naam>/windSpeed` | Wind speed in m/s, at least 0 |
+
+Every message contains JSON, for example `{"apiKey":"YOUR_STATION_API_KEY","value":20.4}`. Values must be finite numbers. The server validates the station and API key before updating only that measurement. Missing measurements remain null until received; existing values and station registrations are preserved. `updated_at` indicates the most recent received measurement, not a synchronized set of three readings. Run `npm run db:setup` once when upgrading to allow independent measurements in an existing database.
+
+Publish without retain. Retained messages replayed on subscription are ignored, so reconnecting does not make old data appear fresh. The generated ESP32 code publishes at QoS 0; a successful publish indicates transmission to the broker, not confirmation of database storage. Measurements sent while the subscriber is offline are not queued for later storage. The map still fetches data over HTTP every 15 seconds. Station registration remains an HTTP request; the HTTP `PUT /api/stations/:id/current` measurement endpoint has been removed.
+
+The bundled anonymous broker is for local development on a trusted network: other clients with broker access can read payloads, including API keys. For a public deployment, configure broker authentication, topic ACLs, and TLS before exposing it. Station clients should only publish to their own three topics; the server account should subscribe to `homestation/+/temperature`, `homestation/+/humidity`, and `homestation/+/windSpeed`. Use `mqtts://broker.example.com:8883` in the ESP32 generator, supply the broker's root CA, and synchronize the ESP32 clock with NTP. For the Node subscriber, `mqtts://` uses the system trust store; a private CA can be provided through `NODE_EXTRA_CA_CERTS`.
 
 ## Public server
 
@@ -63,7 +83,7 @@ npm run db:start
 npm run test:db
 ```
 
-The database integration test creates and removes its own temporary schema. It checks simultaneous registrations, authentication, updating existing readings, database constraints, and the public map response without changing your station data. Other tests check static assets, input validation, database health, safe popup rendering, map refreshes, and ESP32 code generation.
+The database integration test creates and removes its own temporary schema. It checks simultaneous registrations, MQTT API-key validation, independent and concurrent measurement updates, database constraints, and the public map response without changing your station data. Other tests check static assets, input validation, database health, safe popup rendering, map refreshes, MQTT validation and reconnect handling, and ESP32 code generation. These tests do not require a running MQTT broker.
 
 API routes:
 
@@ -72,6 +92,5 @@ API routes:
 | GET | `/api/health` | Checks database connectivity |
 | POST | `/api/register` | Registers a station with `name`, numeric `latitude` and `longitude`, and `classCode` |
 | GET | `/api/stations` | Lists stations and their latest readings without API keys |
-| PUT | `/api/stations/:id/current` | Updates a reading with the station's `x-api-key` header |
 
 Registration responses include an API key once. Do not commit `.env` or `.local/`, or share your API key.

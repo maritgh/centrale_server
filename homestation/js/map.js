@@ -2,14 +2,17 @@ const map = L.map("map").setView([52.1, 5.3], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
+// Bewaar bestaande markers per station-ID, zodat verversen geen dubbele markers maakt.
 const markers = new Map();
 const mapStatus = document.getElementById("mapStatus");
 
+// Gebruik DOM-elementen en textContent: stationsnamen worden zo nooit als HTML uitgevoerd.
 function stationPopup(station) {
     const popup = document.createElement("div");
     const title = document.createElement("strong");
     title.textContent = station.name;
     popup.appendChild(title);
+    // MQTT-waarden komen los binnen; een ontbrekende waarde wordt als "Geen data" getoond.
     const lines = [
         `Temperatuur: ${station.temperature == null ? "Geen data" : station.temperature + " °C"}`,
         `Luchtvochtigheid: ${station.humidity == null ? "Geen data" : station.humidity + " %"}`,
@@ -24,6 +27,7 @@ function stationPopup(station) {
     return popup;
 }
 async function loadStations() {
+    // Breek een vastgelopen verzoek na tien seconden af.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -44,6 +48,7 @@ async function loadStations() {
                 markers.set(station.id, L.marker([lat, lon]).addTo(map).bindPopup(popup));
             }
         }
+        // Verwijder markers van stations die niet meer in het antwoord staan.
         for (const [id, marker] of markers) {
             if (!visible.has(id)) { marker.remove(); markers.delete(id); }
         }
@@ -55,6 +60,7 @@ async function loadStations() {
         console.error(error);
     } finally {
         clearTimeout(timeout);
+        // Plan pas na afloop opnieuw, zodat trage verzoeken elkaar niet overlappen.
         setTimeout(loadStations, 15000);
     }
 }
