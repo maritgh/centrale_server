@@ -1,18 +1,6 @@
 const mqtt = require('mqtt')
 
-/***
- * Browser
- * This document explains how to use MQTT over WebSocket with the ws and wss protocols.
- * EMQX's default port for ws connection is 8083 and for wss connection is 8084.
- * Note that you need to add a path after the connection address, such as /mqtt.
- */
 const url = 'http://localhost:1883'
-/***
- * Node.js
- * This document explains how to use MQTT over TCP with both mqtt and mqtts protocols.
- * EMQX's default port for mqtt connections is 1883, while for mqtts it is 8883.
- */
-// const url = 'mqtt://broker.emqx.io:1883'
 
 // Create an MQTT client instance
 const options = {
@@ -23,6 +11,10 @@ const options = {
     clientId: 'centrale_server',
     username: 'centrale_server',
     password: 'Centrale_server123',
+    // MQTT broker details
+    host: 'localhost',
+    port: 1883,
+    protocol: 'mqtt',
 }
 const client = mqtt.connect(url, options)
 client.on('connect', function () {
