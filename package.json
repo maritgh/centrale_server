@@ -12,10 +12,13 @@
     "test": "node --test",
     "test:db": "RUN_DB_TESTS=1 node --test"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
+    "mqtt": "^5.16.1",
     "pg": "^8.16.0"
   }
 }
