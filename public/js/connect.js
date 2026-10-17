@@ -44,7 +44,7 @@ function generateCode() {
         if (!["mqtt:", "mqtts:"].includes(base.protocol) || base.username || base.password || (base.pathname && base.pathname !== "/") || base.search || base.hash || !base.hostname) throw new Error();
         if (base.port && (Number(base.port) < 1 || Number(base.port) > 65535)) throw new Error();
     } catch {
-        connectError.textContent = "Gebruik een brokeradres zoals mqtt://192.168.1.10:1883, zonder pad of inloggegevens.";
+        connectError.textContent = "Gebruik een brokeradres zoals mqtt://145.24.237.237:8883, zonder pad of inloggegevens.";
         return;
     }
     if (["localhost", "127.0.0.1", "[::1]", "0.0.0.0"].includes(base.hostname)) {
@@ -55,12 +55,6 @@ function generateCode() {
     const secure = base.protocol === "mqtts:";
     const port = Number(base.port || (secure ? 8883 : 1883));
     const topicBase = `homestation/${stationId}/`;
-    const username = stationId;
-    const password = document.getElementById("mqttPasswordInput").value;
-    if (secure && !password) {
-        connectError.textContent = "Vul het MQTT-wachtwoord in dat bij jouw Station ID hoort.";
-        return;
-    }
     endpointElement.textContent = ["temperature", "humidity", "windSpeed", ...customSlugs.map(slug => "custom/" + slug)].map(metric => topicBase + metric).join("\n");
     headerExampleElement.textContent = JSON.stringify({ apiKey, value: 20.4 }, null, 2);
     const tls = secure ? `#include <WiFiClientSecure.h>
@@ -80,8 +74,7 @@ const char* stationId = ${JSON.stringify(stationId)};
 const char* apiKey = ${JSON.stringify(apiKey)};
 const char* mqttHost = ${JSON.stringify(base.hostname.replace(/^\[|\]$/g, ""))};
 const int mqttPort = ${port};
-const char* mqttUsername = ${JSON.stringify(username)};
-const char* mqttPassword = ${JSON.stringify(password)};
+
 ${secure ? "WiFiClientSecure" : "WiFiClient"} mqttNetwork;
 PubSubClient mqttClient(mqttNetwork);
 unsigned long lastMqttAttempt = 0;
@@ -106,7 +99,7 @@ void loopHomeStationMqtt() {
     // Een client-ID per apparaat voorkomt dat ESP32's elkaar van de broker afmelden.
     String clientId = String("hs-") + WiFi.macAddress();
     bool connected = mqttUsername[0]
-      ? mqttClient.connect(clientId.c_str(), mqttUsername, mqttPassword)
+      ? mqttClient.connect(clientId.c_str())
       : mqttClient.connect(clientId.c_str());
     if (!connected) {
       Serial.print("MQTT verbinden mislukt: ");
