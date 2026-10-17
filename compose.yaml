@@ -10,14 +10,14 @@ services:
       PORT: 3001
       DB_HOST: db
       DB_PORT: 5432
-      MQTT_URL: mqtt://mosquitto:1883
+      MQTT_URL: mqtt://mosquitto:8883
     depends_on:
       db:
         condition: service_healthy
       mosquitto:
         condition: service_started
     ports:
-      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-3001}:3001"
+      - "3001:3001"
 
   db:
     image: postgres:17-alpine
@@ -42,7 +42,8 @@ services:
       - ./infra/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
     ports:
-      - "${MQTT_BIND_ADDRESS:-127.0.0.1}:${MQTT_PORT:-1883}:1883"
+      - "8883:8883"
+      - "8884:8884"
 
 volumes:
   postgres_data:
