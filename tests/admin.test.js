@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { once } = require("node:events");
-const { createApp } = require("../node");
+const { createApp } = require("../src/node");
 const adminPassword = "test-admin-password-" + "x".repeat(32);
 
 // Controleer de toegang zonder database: afgewezen verzoeken mogen geen gegevens ophalen.

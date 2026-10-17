@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
-const { adminConfigError } = require("../admin-config");
+const { adminConfigError } = require("../src/admin-config");
 
 // Bewaar bestaande inloggegevens. Meld pas succes als de server ze ook zal accepteren.
 function setupAdmin(file = path.join(__dirname, "..", ".env")) {

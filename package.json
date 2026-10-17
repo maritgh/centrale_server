@@ -7,9 +7,7 @@
     "setup": "node scripts/setup.js",
     "admin:setup": "node scripts/admin-setup.js",
     "admin:start": "npm run admin:setup && npm start",
-    "start": "node node.js",
-    "db:start": "node scripts/local-db.js start",
-    "db:stop": "node scripts/local-db.js stop",
+    "start": "node src/node.js",
     "db:setup": "node scripts/database.js",
     "test": "node --test",
     "test:db": "RUN_DB_TESTS=1 node --test"

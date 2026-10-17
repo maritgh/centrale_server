@@ -80,7 +80,7 @@ function createApp({ pool, classCode, adminUsername = process.env.ADMIN_USERNAME
   app.use("/api/admin", createAdminRouter({ pool, username: adminUsername, password: adminPassword }));
   app.use("/api/account", createAccountRouter({ pool }));
   app.use("/api", (req, res) => res.status(404).json({ error: "API-route niet gevonden" }));
-  app.use(express.static(path.join(__dirname, "homestation")));
+  app.use(express.static(path.join(__dirname, "..", "public")));
   // Vang fouten uit de routes op en stuur een bruikbare HTTP-status terug.
   app.use((error, req, res, next) => {
     if (error.type === "entity.parse.failed") return res.status(400).json({ error: "Ongeldige JSON" });

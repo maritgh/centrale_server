@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { storeMqttReading, startMqtt } = require("../mqtt");
+const { storeMqttReading, startMqtt } = require("../src/mqtt");
 // Vaste testgegevens; dit is geen sleutel van een echt station.
 const apiKey = "a".repeat(64);
 const payload = value => Buffer.from(JSON.stringify({ apiKey, value }));

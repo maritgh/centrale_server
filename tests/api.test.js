@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { once } = require("node:events");
-const { createApp } = require("../node");
+const { createApp } = require("../src/node");
 
 // Start per test een tijdelijke HTTP-server op een vrije poort.
 // De meegegeven pool vervangt PostgreSQL, zodat deze tests geen database nodig hebben.

@@ -5,8 +5,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { Pool } = require("pg");
-const { createApp } = require("../node");
-const { storeMqttReading } = require("../mqtt");
+const { createApp } = require("../src/node");
+const { storeMqttReading } = require("../src/mqtt");
 
 // Deze integratietest gebruikt echt PostgreSQL en draait alleen met RUN_DB_TESTS=1.
 // De MQTT-opslagfunctie wordt direct aangeroepen; er is geen broker nodig.
@@ -20,7 +20,7 @@ test("PostgreSQL: concurrent registration, authenticated MQTT partial updates, a
   try {
     await admin.query(`CREATE SCHEMA ${schema}`);
     pool = new Pool({ ...connection, options: `-c search_path=${schema}` });
-    await pool.query(fs.readFileSync(path.join(__dirname, "..", "schema.sql"), "utf8"));
+    await pool.query(fs.readFileSync(path.join(__dirname, "..", "database", "schema.sql"), "utf8"));
     server = createApp({ pool, classCode: "test-code", adminUsername: "owner", adminPassword: "test-admin-" + "x".repeat(40) }).listen(0, "127.0.0.1");
     await once(server, "listening");
     const url = `http://127.0.0.1:${server.address().port}`;

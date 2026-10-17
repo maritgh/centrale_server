@@ -10,7 +10,7 @@ function element() {
     appendChild(child) { this.children.push(child); }, addEventListener() {} };
 }
 // Lees het echte browserscript, zodat de test dezelfde code uitvoert als de website.
-function source(name) { return fs.readFileSync(path.join(__dirname, "..", "homestation", "js", name), "utf8"); }
+function source(name) { return fs.readFileSync(path.join(__dirname, "..", "public", "js", name), "utf8"); }
 
 test("map treats station names as text and updates existing markers on refresh", async () => {
   const elements = { mapStatus: element() };

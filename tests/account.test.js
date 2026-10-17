@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { once } = require("node:events");
-const { createApp } = require("../node");
+const { createApp } = require("../src/node");
 
 // Deze tests controleren de HTTP-grens zonder echte database of MQTT-broker.
 async function withAccountServer(pool, callback) {

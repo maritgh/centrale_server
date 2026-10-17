@@ -21,7 +21,7 @@ async function setupDatabase({ create = false } = {}) {
   const pool = new Pool(connection());
   try {
     // schema.sql kan opnieuw worden uitgevoerd en bewaart bestaande stations en metingen.
-    await pool.query(fs.readFileSync(path.join(__dirname, "..", "schema.sql"), "utf8"));
+    await pool.query(fs.readFileSync(path.join(__dirname, "..", "database", "schema.sql"), "utf8"));
     console.log("Database tables are ready.");
   } finally { await pool.end(); }
 }
