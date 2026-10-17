@@ -35,7 +35,7 @@ De database is alleen bereikbaar binnen het Docker-netwerk. De webapp luistert s
 
 ## ESP32 en MQTT
 
-De server verbindt intern met Mosquitto via `mqtt://mosquitto:1883`. De brokerpoort is standaard alleen op deze computer bereikbaar op `127.0.0.1:1883`. De broker staat voor lokaal gebruik open zonder account. Stel `MQTT_BIND_ADDRESS` in `.env` in op het LAN-IP van deze computer als een ESP32 op hetzelfde vertrouwde netwerk moet verbinden. Gebruik voor de ESP32 het adres `mqtt://<LAN-IP>:1883`.
+De server verbindt intern met Mosquitto via `mqtt://mosquitto:1883`. De brokerpoort is standaard alleen op deze computer bereikbaar op `127.0.0.1:8883`. De broker staat voor lokaal gebruik open zonder account. Stel `MQTT_BIND_ADDRESS` in `.env` in op het LAN-IP van deze computer als een ESP32 op hetzelfde vertrouwde netwerk moet verbinden. Gebruik voor de ESP32 het adres `mqtt://<LAN-IP>:8883`.
 
 Deze ontwikkelbroker versleutelt het verkeer niet en gebruikt geen brokerwachtwoord. Stel poort 1883 daarom niet rechtstreeks bloot aan het internet. De API-sleutel van een station staat in de MQTT-berichten. Gebruik voor publiek gebruik een broker met TLS en accounts, en een HTTPS-verbinding voor de website.
 
