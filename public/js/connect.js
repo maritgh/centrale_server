@@ -13,7 +13,7 @@ const connectError = document.getElementById("connectError");
 const pageUrl = new URL(window.location.origin);
 serverUrlInput.value = pageUrl.protocol === "https:"
     ? `mqtts://${pageUrl.hostname}:8883`
-    : `mqtt://${pageUrl.hostname}:1883`;
+    : `mqtt://${pageUrl.hostname}:8883`;
 // Vul gegevens uit een registratie in dezelfde browsersessie automatisch in.
 try {
     stationIdInput.value = sessionStorage.getItem("stationId") || "";
@@ -53,7 +53,7 @@ function generateCode() {
     }
     // mqtts gebruikt TLS; zonder expliciete poort kiezen we de gebruikelijke standaard.
     const secure = base.protocol === "mqtts:";
-    const port = Number(base.port || (secure ? 8883 : 1883));
+    const port = Number(base.port || 8883);
     const topicBase = `homestation/${stationId}/`;
     endpointElement.textContent = ["temperature", "humidity", "windSpeed", ...customSlugs.map(slug => "custom/" + slug)].map(metric => topicBase + metric).join("\n");
     headerExampleElement.textContent = JSON.stringify({ apiKey, value: 20.4 }, null, 2);
@@ -98,9 +98,13 @@ void loopHomeStationMqtt() {
     lastMqttAttempt = millis();
     // Een client-ID per apparaat voorkomt dat ESP32's elkaar van de broker afmelden.
     String clientId = String("hs-") + WiFi.macAddress();
+<<<<<<< HEAD
     bool connected = mqttUsername[0]
       ? mqttClient.connect(clientId.c_str())
       : mqttClient.connect(clientId.c_str());
+=======
+    bool connected = mqttClient.connect(clientId.c_str());
+>>>>>>> e2d368d (data is shown on map)
     if (!connected) {
       Serial.print("MQTT verbinden mislukt: ");
       Serial.println(mqttClient.state());

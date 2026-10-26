@@ -15,7 +15,7 @@ function validNumber(value, min = -Infinity, max = Infinity) {
 }
 // HTTP verzorgt de website, registratie en het ophalen van stations.
 // Nieuwe meetgegevens komen binnen via de MQTT-verbinding in mqtt.js.
-function createApp({ pool, classCode, adminUsername = process.env.ADMIN_USERNAME, adminPassword = process.env.ADMIN_PASSWORD }) {
+function createApp({ pool, mqttClient, classCode, adminUsername = process.env.ADMIN_USERNAME, adminPassword = process.env.ADMIN_PASSWORD }) {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "16kb" }));
@@ -23,7 +23,7 @@ function createApp({ pool, classCode, adminUsername = process.env.ADMIN_USERNAME
   app.get("/api/health", async (req, res) => {
     try {
       await pool.query("SELECT 1");
-      res.json({ status: "ok" });
+      res.json({ status: "ok", mqtt: mqttClient?.getHomeStationStatus?.() ?? null });
     } catch {
       res.status(503).json({ status: "error", error: "Database niet bereikbaar" });
     }
@@ -107,7 +107,7 @@ if (require.main === module) {
   const mqttClient = startMqtt({ pool });
   const port = Number(process.env.PORT || 3001);
   const host = process.env.HOST || "127.0.0.1";
-  const server = createApp({ pool, classCode: process.env.CLASS_CODE }).listen(port, host, () => {
+  const server = createApp({ pool, mqttClient, classCode: process.env.CLASS_CODE }).listen(port, host, () => {
     console.log(`Home Station: http://${host}:${port}`);
   });
   server.on("error", error => { console.error(error.message); process.exitCode = 1; mqttClient.end(true, {}, () => pool.end()); });

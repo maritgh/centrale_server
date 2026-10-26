@@ -35,7 +35,7 @@ De database is alleen bereikbaar binnen het Docker-netwerk. De webapp luistert s
 
 ## ESP32 en MQTT
 
-De server verbindt intern met Mosquitto via `mqtt://mosquitto:1883`. De brokerpoort is standaard alleen op deze computer bereikbaar op `127.0.0.1:8883`. De broker staat voor lokaal gebruik open zonder account. Stel `MQTT_BIND_ADDRESS` in `.env` in op het LAN-IP van deze computer als een ESP32 op hetzelfde vertrouwde netwerk moet verbinden. Gebruik voor de ESP32 het adres `mqtt://<LAN-IP>:8883`.
+De server verbindt standaard met Mosquitto via `mqtt://mosquitto:8883` op het Docker-netwerk. Stel `MQTT_URL` in `.env` in als de app een andere broker gebruikt of niet met Mosquitto op hetzelfde Docker-netwerk draait. De brokerpoort is standaard alleen op deze computer bereikbaar op `127.0.0.1:8883`. De broker staat voor lokaal gebruik open zonder account. Stel `MQTT_BIND_ADDRESS` in `.env` in op het LAN-IP van deze computer als een ESP32 op hetzelfde vertrouwde netwerk moet verbinden. Gebruik voor de ESP32 het adres `mqtt://<LAN-IP>:8883`.
 
 Deze ontwikkelbroker versleutelt het verkeer niet en gebruikt geen brokerwachtwoord. Stel poort 1883 daarom niet rechtstreeks bloot aan het internet. De API-sleutel van een station staat in de MQTT-berichten. Gebruik voor publiek gebruik een broker met TLS en accounts, en een HTTPS-verbinding voor de website.
 
@@ -44,6 +44,10 @@ De ESP32 kan de waarden `temperature`, `humidity` en `windSpeed` publiceren op `
 ```json
 {"apiKey":"<station-api-sleutel>","value":20.4}
 ```
+
+Retained MQTT-berichten worden gebruikt om een ontbrekende actuele meting te vullen, maar overschrijven geen waarde die al is opgeslagen.
+De waarde mag een JSON-getal zijn of een tekst die volledig uit een geldig getal bestaat, zoals `"value":"20.4"`.
+`/api/health` toont ook of de MQTT-verbinding en het abonnement actief zijn en wanneer de server voor het laatst een meting heeft ontvangen, geaccepteerd of afgewezen.
 
 Aangepaste meetwaarden gebruiken het topic `homestation/<station-id>/custom/<sleutel>`. Maak de meetwaarde eerst aan op **Mijn account**. De server controleert de station-ID en API-sleutel voordat een meting wordt opgeslagen.
 

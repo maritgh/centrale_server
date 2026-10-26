@@ -56,7 +56,7 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
     URL, navigator: {}, setTimeout() {},
   });
   vm.runInContext(source("connect.js"), context);
-  assert.equal(elements.serverUrlInput.value, "mqtt://192.168.1.10:1883");
+  assert.equal(elements.serverUrlInput.value, "mqtt://192.168.1.10:8883");
   assert.equal(elements.endpoint.textContent, "homestation/test/temperature\nhomestation/test/humidity\nhomestation/test/windSpeed");
   const code = elements.arduinoCode.textContent;
   assert.ok(code.includes('String("{\\"apiKey\\":\\"")'));
@@ -64,8 +64,9 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
   assert.ok(code.includes('publishHomeStationValue("humidity", humidity)'));
   assert.ok(code.includes('publishHomeStationValue("windSpeed", windSpeed)'));
   assert.ok(code.includes('mqttClient.publish(topic.c_str(), payload.c_str(), false)'));
-  assert.ok(code.includes('const char* mqttUsername = "test";'));
-  assert.ok(code.includes('const char* mqttPassword = "station-secret";'));
+  assert.ok(code.includes("bool connected = mqttClient.connect(clientId.c_str());"));
+  assert.ok(!code.includes("mqttUsername"));
+  assert.ok(!code.includes("mqttPassword"));
   assert.ok(!code.includes("HTTPClient"));
   // Weiger HTTP-adressen, topicpaden, ongeldige poorten en inloggegevens in het adres.
   elements.customMetricInput.value = "luchtdruk, lichtsterkte";
@@ -81,7 +82,7 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
     vm.runInContext("generateCode()", context);
     assert.match(elements.connectError.textContent, /brokeradres/);
   }
-  elements.serverUrlInput.value = "mqtt://localhost:1883";
+  elements.serverUrlInput.value = "mqtt://localhost:8883";
   vm.runInContext("generateCode()", context);
   assert.match(elements.connectError.textContent, /LAN-IP/);
   // Bij TLS moet certificaatcontrole actief blijven en poort 8883 de standaard zijn.
@@ -90,9 +91,6 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
   assert.ok(elements.arduinoCode.textContent.includes("mqttNetwork.setCACert(rootCACertificate)"));
   assert.ok(elements.arduinoCode.textContent.includes("mqttPort = 8883"));
   assert.ok(!elements.arduinoCode.textContent.includes("setInsecure"));
-  elements.mqttPasswordInput.value = "";
-  vm.runInContext("generateCode()", context);
-  assert.match(elements.connectError.textContent, /MQTT-wachtwoord/);
 });
 
 // Controleer de accountbediening met dezelfde browsercode, zonder netwerk of echte API-key.

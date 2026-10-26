@@ -52,4 +52,22 @@ test("database outage is reflected in health status", async () => {
   });
 });
 
+test("health reports MQTT connection and processing status without payloads", async () => {
+  const mqttStatus = {
+    broker: "127.0.0.1:8883", connected: true, subscribed: true, lastMessageAt: null,
+    lastAcceptedAt: null, lastRejectedAt: null, lastDatabaseErrorAt: null, lastConnectionError: null,
+  };
+  const server = createApp({
+    pool: { query: async () => ({ rows: [], rowCount: 1 }) },
+    mqttClient: { getHomeStationStatus: () => mqttStatus },
+    classCode: "test-code",
+  }).listen(0, "127.0.0.1");
+  await once(server, "listening");
+  try {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/health`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status: "ok", mqtt: mqttStatus });
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
 module.exports = { withServer };
