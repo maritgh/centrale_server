@@ -1,0 +1,152 @@
+/* Grafiekpagina: losse stijlen, zonder wijzigingen aan style.css. */
+.graph-card {
+    margin-top: 24px;
+    padding: 28px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.graph-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.graph-eyebrow {
+    color: #457b94;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+}
+
+.graph-heading h3 {
+    font-size: 22px;
+    margin: 0 0 6px;
+}
+
+.graph-description {
+    margin: 0;
+    color: #667085;
+}
+
+.graph-period {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 180px;
+}
+
+.graph-period label {
+    margin: 0;
+    font-size: 13px;
+}
+
+.graph-period select {
+    padding: 11px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    color: #1f2933;
+    background: white;
+    font: inherit;
+}
+
+.graph-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 22px;
+}
+
+.graph-metric {
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #f5f7f8;
+    color: #1f2933;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+}
+
+.graph-metric:hover { background: #edf2f4; }
+.graph-metric.active {
+    color: white;
+    background: #1f2933;
+    border-color: #1f2933;
+}
+
+.graph-metric:focus-visible,
+.graph-period select:focus-visible {
+    outline: 3px solid #8ecae6;
+    outline-offset: 2px;
+}
+
+.graph-summary {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.graph-summary-label,
+.graph-summary-time {
+    display: block;
+    color: #667085;
+    font-size: 13px;
+}
+
+#graphLatest {
+    display: block;
+    margin-top: 5px;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.graph-summary-time { padding-bottom: 5px; }
+
+.graph-chart-container {
+    position: relative;
+    width: 100%;
+    height: 370px;
+}
+
+.graph-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    color: #667085;
+    background: #f5f7f8;
+    border-radius: 10px;
+}
+
+.graph-empty[hidden] { display: none; }
+
+.graph-status { color: #667085; font-size: 13px; margin: 14px 0 0; }
+.graph-status.error { color: #b42318; }
+.graph-note {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .graph-card { padding: 18px; }
+    .graph-heading { flex-direction: column; gap: 18px; }
+    .graph-period { width: 100%; }
+    .graph-metric { flex: 1 1 auto; }
+    .graph-chart-container { height: 310px; }
+}

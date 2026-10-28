@@ -14,3 +14,22 @@ CREATE TABLE IF NOT EXISTS current_readings (
   extra JSONB,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS readings_history (
+                                                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                                station_id TEXT NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+
+    temperature DOUBLE PRECISION NOT NULL,
+    humidity DOUBLE PRECISION NOT NULL CHECK (humidity BETWEEN 0 AND 100),
+    wind_speed DOUBLE PRECISION NOT NULL CHECK (wind_speed >= 0),
+    extra JSONB,
+
+    measured_at TIMESTAMPTZ NOT NULL,
+    saved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (station_id, measured_at)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_history_station_time
+    ON readings_history (station_id, measured_at DESC);

@@ -3,6 +3,8 @@ const express = require("express");
 const { Pool } = require("pg");
 const crypto = require("crypto");
 const path = require("path");
+const { startHistory } = require("./scripts/history");
+const { registerGraphApi } = require("./scripts/graph-api");
 
 function validNumber(value, min = -Infinity, max = Infinity) {
   return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
@@ -83,6 +85,7 @@ function createApp({ pool, classCode }) {
       res.json({ success: true, reading: result.rows[0] });
     } catch (error) { next(error); }
   });
+  registerGraphApi(app, pool);
   app.use("/api", (req, res) => res.status(404).json({ error: "API-route niet gevonden" }));
   app.use(express.static(path.join(__dirname, "homestation")));
   app.use((error, req, res, next) => {
@@ -106,12 +109,15 @@ if (require.main === module) {
   pool.on("error", error => console.error("Database connection error:", error.message));
   const port = Number(process.env.PORT || 3000);
   const host = process.env.HOST || "127.0.0.1";
+  let stopHistory = () => {};
   const server = createApp({ pool, classCode: process.env.CLASS_CODE }).listen(port, host, () => {
     console.log(`Home Station: http://${host}:${port}`);
+    // Start automatisch de historische opslag
+    stopHistory = startHistory(pool);
   });
-  server.on("error", error => { console.error(error.message); process.exitCode = 1; pool.end(); });
+  server.on("error", error => { console.error(error.message); stopHistory(); process.exitCode = 1; pool.end().catch(console.error); });
   for (const signal of ["SIGINT", "SIGTERM"]) {
-    process.once(signal, () => server.close(() => pool.end()));
+    process.once(signal, () => { stopHistory(); server.close(() => pool.end())});
   }
 }
 module.exports = { createApp };

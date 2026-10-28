@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafiek | Home Station Network</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/graph.css">
+</head>
+<body>
+<header>
+    <div>
+        <h1>Home Station Network</h1>
+        <p>Live weergegevens van onze Home Stations</p>
+    </div>
+    <nav aria-label="Hoofdnavigatie">
+        <a href="/">Weerkaart</a>
+        <a href="/graph.html" aria-current="page">Grafiek</a>
+        <a href="/register.html">Station aanmelden</a>
+        <a href="/connect.html">Hoe verstuur ik data?</a>
+    </nav>
+</header>
+
+<main>
+    <section class="intro">
+        <h2>Grafiek</h2>
+        <p>Bekijk hoe de meetgegevens van jouw Home Station veranderen gedurende de dag.</p>
+    </section>
+
+    <!-- Dit gedeelte kan later naar de ingelogde profielpagina worden verplaatst. -->
+    <section class="graph-card" data-history-graph aria-labelledby="graphTitle">
+        <div class="graph-heading">
+            <div>
+                <p class="graph-eyebrow">Testweergave</p>
+                <h3 id="graphTitle">Mijn Home Station</h3>
+                <p class="graph-description">Historische sensorgegevens</p>
+            </div>
+            <div class="graph-period">
+                <label for="graphPeriod">Periode</label>
+                <select id="graphPeriod">
+                    <option value="1">Laatste uur</option>
+                    <option value="6">Laatste 6 uur</option>
+                    <option value="24" selected>Laatste 24 uur</option>
+                    <option value="48">Laatste 48 uur</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="graph-metrics" role="group" aria-label="Kies een grootheid">
+            <button type="button" class="graph-metric active" data-metric="temperature" aria-pressed="true">Temperatuur</button>
+            <button type="button" class="graph-metric" data-metric="humidity" aria-pressed="false">Luchtvochtigheid</button>
+            <button type="button" class="graph-metric" data-metric="wind_speed" aria-pressed="false">Windsnelheid</button>
+        </div>
+
+        <div class="graph-summary">
+            <div>
+                <span class="graph-summary-label">Laatst opgeslagen meetwaarde</span>
+                <strong id="graphLatest">--</strong>
+            </div>
+            <span class="graph-summary-time" id="graphLatestTime">Nog geen metingen</span>
+        </div>
+
+        <div class="graph-chart-container">
+            <canvas id="historyChart" aria-label="Lijngrafiek van historische metingen" role="img"></canvas>
+            <p id="graphEmpty" class="graph-empty" hidden>Er zijn nog geen meetpunten voor deze periode.</p>
+        </div>
+
+        <p id="graphStatus" class="graph-status" role="status">Meetgegevens laden...</p>
+        <p class="graph-note">Historische meetpunten worden maximaal ongeveer eenmaal per minuut opgeslagen. De actuele weerkaart blijft apart werken.</p>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="/js/graph.js"></script>
+</body>
+</html>

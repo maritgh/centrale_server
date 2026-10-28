@@ -38,7 +38,11 @@ async function main() {
       const passwordFile = path.join(temporary, "password");
       fs.writeFileSync(passwordFile, process.env.DB_PASSWORD + "\n", { mode: 0o600 });
       run("initdb", ["-D", data, "-U", process.env.DB_USER, "--pwfile", passwordFile, "--auth=scram-sha-256", "--encoding=UTF8"]);
-      fs.appendFileSync(path.join(data, "postgresql.conf"), `\nlisten_addresses = '127.0.0.1'\nport = ${Number(process.env.DB_PORT)}\nunix_socket_directories = '${root.replace(/'/g, "''")}'\n`);
+      fs.appendFileSync(path.join(data, "postgresql.conf"), `
+listen_addresses = '127.0.0.1'
+port = ${Number(process.env.DB_PORT)}
+unix_socket_directories = '${root.replace(/'/g, "''")}'
+`);
     } finally { fs.rmSync(temporary, { recursive: true, force: true }); }
   }
   if (run("pg_ctl", ["-D", data, "status"], true).status !== 0) {
