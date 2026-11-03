@@ -142,6 +142,7 @@ test('grafiek-API valideert filters en beperkt data tot eigen station', async ()
         require(name) {
             if (name === 'express') return { Router() { return fakeRouter; } };
             if (name === './station-id') return { createStationId: name => name };
+            if (name === './mqtt') return require('../src/mqtt');
             return require(name);
         },
         process, Buffer,

@@ -49,6 +49,20 @@
                 <button class="button" type="submit">Wijzigingen opslaan</button>
             </form>
         </section>
+        <section class="register-card">
+            <h2>Actuator aansturen</h2>
+            <p>Stuur een JSON-object naar je eigen station via <code id="actuatorTopic"></code>. Laat je ESP32 op dit topic abonneren en de opdracht verwerken.</p>
+            <p>JSON format ziet er zo uit {"topic":value} </p>
+            <form id="actuatorForm">
+                
+                <label for="actuatorPayload">JSON-bericht</label>
+                <textarea id="actuatorPayload" rows="7" spellcheck="false" placeholder='{"led":true}' required></textarea>
+                <small>Maximaal 1024 bytes. De inhoud moet passen bij de code op jouw ESP32.</small>
+                <button class="button" type="submit">JSON versturen</button>
+            </form>
+            <p id="actuatorStatus" role="status" aria-live="polite"></p>
+            <p>Het bericht wordt eenmalig verstuurd en niet bewaard voor later. Een verzendmelding bevestigt niet dat je ESP32 de opdracht heeft uitgevoerd.</p>
+        </section>
         <!-- Een grootheid beschrijft een numerieke sensorwaarde; de ESP32 levert de echte metingen. -->
         <section class="register-card">
             <h2>Eigen grootheden</h2>

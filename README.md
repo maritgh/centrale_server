@@ -51,6 +51,10 @@ De waarde mag een JSON-getal zijn of een tekst die volledig uit een geldig getal
 
 Aangepaste meetwaarden gebruiken het topic `homestation/<station-id>/custom/<sleutel>`. Maak de meetwaarde eerst aan op **Mijn account**. De server controleert de station-ID en API-sleutel voordat een meting wordt opgeslagen.
 
+Via **Mijn account → Actuator aansturen** kun je een JSON-object (maximaal 1024 bytes) vanuit de server naar `homestation/<jouw-station-id>/actuator` sturen, bijvoorbeeld `{"led":true}`. De server kiest het topic op basis van je ingelogde account. Na hernoemen wordt het nieuwe station-ID gebruikt. Laat je ESP32 op dat topic abonneren en de JSON verwerken; de inhoud bepaal je zelf volgens je firmware.
+
+De bijbehorende route is `POST /api/account/actuator` met `Content-Type: application/json`, je account-sessiecookie en het JSON-object als requestbody. Het bericht wordt ongewijzigd als JSON gepubliceerd, zonder toegevoegde API-key, met QoS 0 en `retain: false`. Opdrachten worden niet bewaard wanneer de broker offline is en worden niet automatisch opnieuw verstuurd. Een succesvolle reactie (`{"success":true,"topic":"homestation/<station-id>/actuator"}`) betekent dat de server het bericht heeft verstuurd, niet dat de ESP32 de opdracht heeft ontvangen of uitgevoerd. Bij een verbindingsfout wordt een foutmelding getoond.
+
 ## Mappenstructuur
 
 ```text

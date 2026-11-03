@@ -78,7 +78,7 @@ function createApp({ pool, mqttClient, classCode, adminUsername = process.env.AD
   });
   // Accountbeheer heeft eigen sessiecontrole voor profiel en meetgeschiedenis.
   app.use("/api/admin", createAdminRouter({ pool, username: adminUsername, password: adminPassword }));
-  app.use("/api/account", createAccountRouter({ pool }));
+  app.use("/api/account", createAccountRouter({ pool, mqttClient }));
   app.use("/api", (req, res) => res.status(404).json({ error: "API-route niet gevonden" }));
   app.use(express.static(path.join(__dirname, "..", "public")));
   // Vang fouten uit de routes op en stuur een bruikbare HTTP-status terug.

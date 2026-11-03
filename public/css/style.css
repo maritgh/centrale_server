@@ -94,6 +94,16 @@ input {
     font-size: 16px;
 }
 
+textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #d0d5dd;
+    font: 16px monospace;
+    resize: vertical;
+}
+
 form .button {
     border: none;
     cursor: pointer;

@@ -98,13 +98,7 @@ void loopHomeStationMqtt() {
     lastMqttAttempt = millis();
     // Een client-ID per apparaat voorkomt dat ESP32's elkaar van de broker afmelden.
     String clientId = String("hs-") + WiFi.macAddress();
-<<<<<<< HEAD
-    bool connected = mqttUsername[0]
-      ? mqttClient.connect(clientId.c_str())
-      : mqttClient.connect(clientId.c_str());
-=======
     bool connected = mqttClient.connect(clientId.c_str());
->>>>>>> e2d368d (data is shown on map)
     if (!connected) {
       Serial.print("MQTT verbinden mislukt: ");
       Serial.println(mqttClient.state());

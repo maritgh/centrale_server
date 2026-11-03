@@ -110,6 +110,7 @@ test("account UI logs in, edits profile, pages history and clears private data o
   const storedCredentials = new Map([["stationId", "test"], ["apiKey", "a".repeat(64)]]);
   const customMetrics = [];
   let loggedIn = false;
+  let actuatorFailure = false;
   let station = { id: "test", name: '<img src=x onerror="alert(1)">', latitude: 52, longitude: 5 };
   const calls = [];
   const context = vm.createContext({
@@ -124,6 +125,10 @@ test("account UI logs in, edits profile, pages history and clears private data o
       if (url.endsWith("/login")) { loggedIn = true; data = { station }; }
       else if (url.endsWith("/logout")) { loggedIn = false; data = { success: true }; }
       else if (!loggedIn) { status = 401; data = { error: "Log eerst in" }; }
+      else if (url.endsWith("/actuator")) {
+        status = actuatorFailure ? 503 : 200;
+        data = actuatorFailure ? { error: "MQTT is niet verbonden" } : { success: true, topic: `homestation/${station.id}/actuator` };
+      }
       else if (url.includes("/metrics/") && options.method === "DELETE") { customMetrics.splice(0); data = { success: true }; }
       else if (url.endsWith("/metrics") && options.method === "POST") { customMetrics.push(body); data = { metric: body }; }
       else if (url.endsWith("/metrics")) { data = { metrics: customMetrics }; }
@@ -162,7 +167,26 @@ test("account UI logs in, edits profile, pages history and clears private data o
   assert.equal(station.latitude, 51.9);
   assert.equal(station.id, "nieuwe-naam");
   assert.equal(elements.accountStationId.textContent, "nieuwe-naam");
+  assert.equal(elements.actuatorTopic.textContent, "homestation/nieuwe-naam/actuator");
   assert.equal(storedCredentials.get("stationId"), "nieuwe-naam");
+  const beforeActuator = calls.length;
+  elements.actuatorPayload ||= accountNode();
+  for (const invalid of ["{", "[]", "null", '"on"']) {
+    elements.actuatorPayload.value = invalid;
+    await submit("actuatorForm");
+    assert.equal(calls.length, beforeActuator);
+    assert.match(elements.actuatorStatus.textContent, /JSON/);
+  }
+  elements.actuatorPayload.value = '{"led":true,"brightness":42}';
+  await submit("actuatorForm");
+  assert.equal(calls.at(-1).url, "/api/account/actuator");
+  assert.deepEqual(JSON.parse(calls.at(-1).options.body), { led: true, brightness: 42 });
+  assert.match(elements.actuatorStatus.textContent, /JSON verstuurd naar homestation\/nieuwe-naam\/actuator/);
+  assert.equal(elements.actuatorForm.button.disabled, false);
+  actuatorFailure = true;
+  await submit("actuatorForm");
+  assert.equal(elements.actuatorStatus.textContent, "MQTT is niet verbonden");
+  assert.equal(elements.actuatorForm.button.disabled, false);
   for (const id of ["metricName", "metricUnit", "metricSlug"]) elements[id] ||= accountNode();
   elements.metricName.value = "Luchtdruk";
   elements.metricUnit.value = "hPa";
@@ -197,6 +221,9 @@ test("account UI logs in, edits profile, pages history and clears private data o
   assert.equal(elements.loginName.value, "");
   assert.equal(elements.historyRows.children.length, 0);
   assert.equal(elements.profileName.value, "");
+  assert.equal(elements.actuatorPayload.value, "");
+  assert.equal(elements.actuatorTopic.textContent, "");
+  assert.equal(elements.actuatorStatus.textContent, "");
   assert.equal(elements.customMetricsList.children.length, 0);
   assert.ok(calls.every(call => !call.url.includes("apiKey")));
 });

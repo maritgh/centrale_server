@@ -1,6 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const { createStationId } = require("./station-id");
+const { publishActuator } = require("./mqtt");
 
 const cookieName = "homestation_session";
 const sessionHours = 8;
@@ -8,7 +9,7 @@ const hashToken = token => crypto.createHash("sha256").update(token).digest("hex
 
 // Accounts horen bij bestaande stations. De API-key blijft de sleutel voor MQTT;
 // de browser krijgt na inloggen een aparte, tijdelijke sessiecookie.
-function createAccountRouter({ pool }) {
+function createAccountRouter({ pool, mqttClient }) {
   const router = express.Router();
   router.use((req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -80,6 +81,16 @@ function createAccountRouter({ pool }) {
   });
 
   router.get("/", (req, res) => res.json({ station: req.station }));
+  router.post("/actuator", async (req, res, next) => {
+    try {
+      // Het topic wordt uitsluitend afgeleid van de ingelogde eigenaar.
+      const topic = await publishActuator(mqttClient, req.station.id, req.body);
+      res.json({ success: true, topic });
+    } catch (error) {
+      if ([400, 413, 502, 503, 504].includes(error.status)) return res.status(error.status).json({ error: error.message });
+      next(error);
+    }
+  });
   router.patch("/", async (req, res, next) => {
     const { name, latitude, longitude } = req.body || {};
     if (typeof name !== "string" || !name.trim() || name.trim().length > 120) {

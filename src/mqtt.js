@@ -8,6 +8,34 @@ const metrics = {
   windSpeed: { column: "wind_speed", min: 0, max: Infinity },
 };
 
+// Actuatoropdrachten worden direct verstuurd, zonder bewaren of opnieuw afspelen.
+async function publishActuator(client, stationId, body, timeoutMs = 5000) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw Object.assign(new Error("Gebruik een JSON-object voor de actuator"), { status: 400 });
+  }
+  const payload = JSON.stringify(body);
+  if (Buffer.byteLength(payload) > 1024) {
+    throw Object.assign(new Error("Actuator-JSON mag maximaal 1024 bytes bevatten"), { status: 413 });
+  }
+  if (!client?.connected) {
+    throw Object.assign(new Error("MQTT is niet verbonden. Probeer het later opnieuw."), { status: 503 });
+  }
+  const topic = `homestation/${stationId}/actuator`;
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(Object.assign(
+      new Error("Geen verzendbevestiging van MQTT ontvangen; uitvoering is onbekend."), { status: 504 }
+    )), timeoutMs);
+    const done = error => {
+      clearTimeout(timer);
+      if (error) reject(Object.assign(new Error("Versturen via MQTT mislukt; uitvoering is onbekend."), { status: 502 }));
+      else resolve();
+    };
+    try { client.publish(topic, payload, { qos: 0, retain: false }, done); }
+    catch (error) { done(error); }
+  });
+  return topic;
+}
+
 // Verwerk één bericht: { apiKey: "...", value: 20.4 }.
 // Geef false terug bij ongeldige invoer of als station en API-key niet overeenkomen.
 async function storeMqttReading(pool, topic, payload, packet = {}) {
@@ -74,6 +102,7 @@ function startMqtt({ pool, url = process.env.MQTT_URL || "mqtt://127.0.0.1:8883"
     password: process.env.MQTT_PASSWORD || undefined,
     reconnectPeriod: 2000,
     connectTimeout: 5000,
+    queueQoSZero: false,
   });
   let connected = false;
   let subscribed = false;
@@ -137,4 +166,4 @@ function startMqtt({ pool, url = process.env.MQTT_URL || "mqtt://127.0.0.1:8883"
   });
   return client;
 }
-module.exports = { storeMqttReading, startMqtt };
+module.exports = { storeMqttReading, startMqtt, publishActuator };
