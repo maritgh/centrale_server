@@ -23,6 +23,8 @@ function showLoggedOut() {
     accountElement("accountSection").classList.add("hidden");
     accountElement("logoutButton").classList.add("hidden");
     accountElement("historyRows").replaceChildren();
+    window.historyGraph?.stopAutoRefresh();
+    window.historyGraph?.clear();
     accountElement("customMetricsList").replaceChildren();
     accountElement("metricsStatus").textContent = "";
     accountElement("customCodeLink").href = "/connect.html";
@@ -51,6 +53,8 @@ async function accountRequest(path = "", options = {}) {
 
 function showStation(station) {
     accountVersion++;
+    window.historyGraph?.clear();
+    window.historyGraph?.startAutoRefresh();
     accountElement("loginSection").classList.add("hidden");
     accountElement("accountSection").classList.remove("hidden");
     accountElement("logoutButton").classList.remove("hidden");
@@ -115,6 +119,7 @@ async function loadMetrics() {
     // De link neemt alleen niet-geheime topicsleutels mee naar de codegenerator.
     accountElement("customCodeLink").href = "/connect.html?" + new URLSearchParams({ station: accountElement("accountStationId").textContent, custom: data.metrics.map(metric => metric.slug).join(",") });
     accountElement("metricsStatus").textContent = data.metrics.length ? `${data.metrics.length} eigen grootheden.` : "Je hebt nog geen eigen grootheden toegevoegd.";
+    window.historyGraph?.setMetrics(data.metrics);
 }
 
 // Ververs actuele eigen waarden en geschiedenis samen. Nieuwe filters blijven behouden.
@@ -122,7 +127,10 @@ async function loadDashboard() {
     try {
         const version = accountVersion;
         await loadMetrics();
-        if (version === accountVersion) await loadHistory();
+        if (version === accountVersion) {
+            await loadHistory();
+            if (version === accountVersion) await window.historyGraph?.refresh();
+        }
     } catch (error) { errorElement.textContent = error.message; }
 }
 

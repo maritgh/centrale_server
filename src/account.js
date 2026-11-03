@@ -165,6 +165,48 @@ function createAccountRouter({ pool }) {
     } finally { if (client) client.release(); }
   });
 
+  // Grafiekdata voor het eigen station. Lange periodes worden per tijdblok gemiddeld,
+  // zodat de grafiek ook bij veel metingen snel en overzichtelijk blijft.
+  router.get("/history/graph", async (req, res, next) => {
+    const metric = req.query.metric === undefined ? "temperature" : req.query.metric;
+    const period = req.query.period === undefined ? "7d" : req.query.period;
+    if (typeof metric !== "string" || !/^(temperature|humidity|windSpeed|custom\/[a-z][a-z0-9-]{0,39})$/.test(metric) ||
+        typeof period !== "string" || !["today", "yesterday", "7d", "30d"].includes(period)) {
+      return res.status(400).json({ error: "Ongeldige meetwaarde of periode" });
+    }
+    try {
+      // Daggrenzen volgen de Nederlandse tijd, ook bij overgang naar zomer-/wintertijd.
+      const result = await pool.query(
+        `WITH bounds AS (
+           SELECT
+             CASE $2::text
+               WHEN 'today' THEN date_trunc('day', NOW() AT TIME ZONE 'Europe/Amsterdam') AT TIME ZONE 'Europe/Amsterdam'
+               WHEN 'yesterday' THEN (date_trunc('day', NOW() AT TIME ZONE 'Europe/Amsterdam') - INTERVAL '1 day') AT TIME ZONE 'Europe/Amsterdam'
+               WHEN '7d' THEN NOW() - INTERVAL '7 days'
+               ELSE NOW() - INTERVAL '30 days'
+             END AS start_at,
+             CASE WHEN $2::text = 'yesterday'
+               THEN date_trunc('day', NOW() AT TIME ZONE 'Europe/Amsterdam') AT TIME ZONE 'Europe/Amsterdam'
+               ELSE NOW() END AS end_at,
+             CASE $2::text
+               WHEN 'today' THEN INTERVAL '5 minutes'
+               WHEN 'yesterday' THEN INTERVAL '5 minutes'
+               WHEN '7d' THEN INTERVAL '30 minutes'
+               ELSE INTERVAL '2 hours'
+             END AS bucket_size
+         )
+         SELECT date_bin(b.bucket_size, h.received_at, TIMESTAMPTZ '2000-01-01 00:00:00+00') AS received_at,
+                AVG(h.value)::double precision AS value, COUNT(*)::integer AS samples
+         FROM reading_history h CROSS JOIN bounds b
+         WHERE h.station_id = $1 AND h.metric = $3
+           AND h.received_at >= b.start_at AND h.received_at < b.end_at
+         GROUP BY 1 ORDER BY 1 ASC`,
+        [req.station.id, period, metric]
+      );
+      res.json({ metric, period, readings: result.rows });
+    } catch (error) { next(error); }
+  });
+
   router.get("/history", async (req, res, next) => {
     const { metric, before } = req.query;
     const limit = req.query.limit === undefined ? 50 : Number(req.query.limit);
@@ -174,15 +216,17 @@ function createAccountRouter({ pool }) {
       return res.status(400).json({ error: "Ongeldig filter of paginanummer" });
     }
     try {
-      // Lees een begrensde pagina, nieuwste eerst. Een ID-cursor voorkomt verschuivende
-      // pagina's wanneer ondertussen nieuwe MQTT-metingen binnenkomen.
+      // Sorteer op meetdatum, niet op de volgorde waarin data werd ingevoerd.
+      // De bestaande ID-cursor blijft werken; de bijbehorende datum bepaalt de
+      // paginagrens. Bij gelijke tijdstippen beslist de ID over de volgorde.
       const result = await pool.query(
         `SELECT h.id, h.metric, h.value, h.received_at, m.name AS metric_name, m.unit
          FROM reading_history h LEFT JOIN custom_metrics m
            ON m.station_id = h.station_id AND h.metric = 'custom/' || m.slug
+         LEFT JOIN reading_history page_cursor ON page_cursor.id = $3::bigint AND page_cursor.station_id = $1
          WHERE h.station_id = $1 AND ($2::text IS NULL OR h.metric = $2)
-           AND ($3::bigint IS NULL OR h.id < $3)
-         ORDER BY h.id DESC LIMIT $4`,
+           AND ($3::bigint IS NULL OR (h.received_at, h.id) < (page_cursor.received_at, page_cursor.id))
+         ORDER BY h.received_at DESC, h.id DESC LIMIT $4`,
         [req.station.id, metric || null, before || null, limit + 1]
       );
       const readings = result.rows.slice(0, limit);

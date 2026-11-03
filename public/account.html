@@ -73,6 +73,27 @@
         <section class="history-card">
             <h2>Mijn meetgeschiedenis</h2>
             <p>Nieuwe metingen worden bewaard vanaf de invoering van deze geschiedenis. Eerdere meetreeksen zijn niet beschikbaar.</p>
+            <section class="history-graph" aria-labelledby="graphHeading">
+                <h3 id="graphHeading">Grafiek</h3>
+                <div class="history-controls graph-controls">
+                    <label for="graphMetric">Meetwaarde</label>
+                    <select id="graphMetric">
+                        <option value="temperature">Temperatuur</option>
+                        <option value="humidity">Luchtvochtigheid</option>
+                        <option value="windSpeed">Windsnelheid</option>
+                    </select>
+                    <label for="graphPeriod">Periode</label>
+                    <select id="graphPeriod">
+                        <option value="today">Vandaag</option>
+                        <option value="yesterday">Gisteren</option>
+                        <option value="7d" selected>Afgelopen 7 dagen</option>
+                        <option value="30d">Afgelopen 30 dagen</option>
+                    </select>
+                </div>
+                <div class="graph-canvas"><canvas id="historyGraph" role="img" aria-label="Historische meetwaarden als lijngrafiek"></canvas></div>
+                <p id="graphStatus" role="status" aria-live="polite"></p>
+            </section>
+            <h3>Alle metingen</h3>
             <div class="history-controls">
                 <label for="historyMetric">Meetwaarde</label>
                 <select id="historyMetric">
@@ -95,6 +116,9 @@
         </section>
     </section>
 </main>
+<!-- De grafiek gebruikt Chart.js; de overige accountfuncties blijven zelfstandig werken. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="/js/history-graph.js"></script>
 <script src="/js/account.js"></script>
 </body>
 </html>

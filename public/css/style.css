@@ -200,3 +200,23 @@ nav { flex-wrap: wrap; }
 /* Sleutels worden alleen op verzoek getoond; acties blijven visueel van elkaar gescheiden. */
 .admin-key { display: block; max-width: 28rem; white-space: normal; margin-top: 12px; }
 .danger { background: #b42318; margin-left: 8px; }
+
+/* De grafiek gebruikt dezelfde rustige opmaak als de rest van Mijn account. */
+.history-graph {
+    margin: 24px 0;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+.history-graph h3 { margin: 0 0 16px; }
+.graph-controls { margin-bottom: 12px; }
+.graph-controls label { margin: 0; }
+.graph-controls select { min-width: 150px; }
+.graph-canvas { position: relative; width: 100%; height: 280px; }
+#graphStatus { margin: 10px 0 0; color: #667085; font-size: 14px; }
+@media (max-width: 700px) {
+    .graph-canvas { height: 240px; }
+    .graph-controls { align-items: flex-start; }
+    .graph-controls label { width: 100%; }
+    .graph-controls select { width: 100%; }
+    .history-card { padding: 16px; }
+}
