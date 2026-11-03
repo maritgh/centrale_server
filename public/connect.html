@@ -6,38 +6,44 @@
 
     <title>Hoe verstuur ik data?</title>
 
+    <meta name="theme-color" content="#254c3e">
+    <link rel="icon" href="/assets/weather-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
+<a class="skip-link" href="#main-content">Ga naar de inhoud</a>
 
 <header>
-    <div>
-        <h1>Home Station Network</h1>
-        <p>Live weergegevens van onze Home Stations</p>
-    </div>
-
-    <nav>
+    <a class="brand" href="/" aria-label="Home Station — naar de weerkaart">
+        <img src="/assets/weather-mark.svg" width="48" height="48" alt="">
+        <span><strong>Home Station<span class="brand-dot">.</span></strong><small>Samen meten, meer weten</small></span>
+    </a>
+    <nav aria-label="Hoofdnavigatie">
         <a href="/">Weerkaart</a>
-        <a href="/register.html">Station aanmelden</a>
-        <a href="/connect.html">Hoe verstuur ik data?</a>
-        <a href="/account.html">Mijn account</a>
+        <a href="/connect.html" aria-current="page">ESP32 verbinden</a>
+        <a href="/account.html">Mijn station</a>
+        <a href="/register.html" class="nav-cta">Station aanmelden <span aria-hidden="true">↗</span></a>
     </nav>
 </header>
 
-<main>
+<main id="main-content">
+    <section class="page-intro"><p class="eyebrow">Van sensor naar scherm</p><h1>Maak verbinding met buiten.</h1><p>Van je eerste meting tot je eigen sensoren: hier help je jouw ESP32 op weg.</p></section>
 
     <section class="register-card">
 
-        <h2>Meetgegevens versturen vanaf je ESP32</h2>
+        <span class="card-kicker">Aan de slag met MQTT</span>
+        <h2>Verbind je ESP32</h2>
 
         <p>
             Jouw ESP32 stuurt temperatuur, luchtvochtigheid en
             windsnelheid via MQTT naar drie afzonderlijke topics.
+            Via een eigen actuator-topic ontvangt je ESP32 ook opdrachten vanuit Mijn station.
         </p>
 
         <p>
-            Vul hieronder jouw Station ID en API-key in.
+            Hieronder zie je alvast voorbeeldcode, ook zonder gegevens in te vullen.
+            Vul jouw Station ID en API-key in en klik op <strong>Maak mijn code</strong> voor je eigen versie.
             Als je net een station hebt aangemaakt, worden deze
             automatisch ingevuld.
         </p>
@@ -71,8 +77,10 @@
         </button>
 
 
-        <!-- Alleen zichtbaar na geldige invoer; JavaScript vult topics, voorbeeld en Arduino-code. -->
+        <!-- JavaScript toont direct een invulvoorbeeld, of code met de eigen stationgegevens. -->
         <section id="codeSection" class="hidden">
+
+            <p id="codeStatus" class="form-hint" role="status"></p>
 
             <h2>1. MQTT-topics</h2>
             <p>Publiceer één bericht per meetwaarde op het bijbehorende topic:</p>
@@ -80,12 +88,15 @@
             <p>Elk bericht is JSON met jouw API-key en één numerieke waarde. Bijvoorbeeld voor temperatuur:</p>
             <pre id="headerExample"></pre>
             <p>Publiceer zonder retain. De server bewaart de laatste waarde van elk topic.</p>
+            <p>De ESP32 abonneert op dit topic om actuatoropdrachten te ontvangen:</p>
+            <pre id="actuatorEndpoint"></pre>
 
             <h2>2. ESP32-code</h2>
 
             <p>
-                Voeg onderstaande functie toe aan je Arduino-project.
-                Installeer de Arduino-library PubSubClient van Nick O’Leary. Je ESP32 moet al verbonden zijn met WiFi.
+                Voeg onderstaande code toe aan je Arduino-project.
+                Installeer de Arduino-libraries <a href="https://pubsubclient.knolleary.net/">PubSubClient</a> van Nick O’Leary
+                en <a href="https://arduinojson.org/v7/">ArduinoJson 7</a> van Benoît Blanchon. Je ESP32 moet al verbonden zijn met WiFi.
             </p>
 
             <pre id="arduinoCode"></pre>
@@ -141,11 +152,27 @@
                 De seriële monitor meldt of het verzenden naar de broker lukt. Dit is geen bevestiging van databaseopslag. De kaart toont ontvangen metingen bij de volgende verversing.
             </p>
 
+            <h2>4. Een actuator aansturen</h2>
+            <p>De code bevat al een MQTT-callback die JSON-opdrachten op het eigen actuator-topic verwerkt.
+                Laat <code>loopHomeStationMqtt()</code> bij iedere <code>loop()</code> draaien, ook als je geen metingen verstuurt.
+                De code abonneert opnieuw na een verbroken verbinding.</p>
+            <p>Het voorbeeld gebruikt een gewone digitale led. Zet <code>actuatorLedPin</code> op de GPIO van jouw led.
+                Met de standaardwaarde <code>-1</code> zie je opdrachten alleen in de seriële monitor.
+                Schakelt jouw led in bij een laag signaal? Zet dan <code>actuatorLedActiveLow</code> op <code>true</code>.
+                Voor een adresseerbare RGB-led of een andere actuator pas je <code>handleHomeStationActuator()</code> aan.</p>
+            <p>Open <a href="/account.html">Mijn station</a>, log in en stuur bij <strong>Actuator aansturen</strong>:</p>
+            <pre>{"led":true}</pre>
+            <p>Uitschakelen kan met:</p>
+            <pre>{"led":false}</pre>
+            <p>De opdrachten bevatten geen API-key. De server kiest het station via je ingelogde account.
+                De ESP32 moet verbonden zijn op het moment van versturen; opdrachten worden niet bewaard.</p>
+
         </section>
 
     </section>
 
 </main>
+<footer><a class="footer-brand" href="/">Home Station<span>.</span></a><p>Gemaakt om samen het weer te ontdekken.</p><a href="/admin.html">Beheer <span aria-hidden="true">↗</span></a></footer>
 
 <!-- De generator draait in de browser en verstuurt zelf geen sensormetingen. -->
 <script src="/js/connect.js"></script>

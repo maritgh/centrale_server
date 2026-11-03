@@ -1,232 +1,123 @@
-/* Neem padding en randen mee in breedtes, zodat elementen binnen hun container blijven. */
-* {
-    box-sizing: border-box;
+/* Gedeeld palet voor de kaart, formulieren en dashboards. */
+:root {
+    --paper: #f7f6f0;
+    --white: #fffefa;
+    --ink: #243f35;
+    --muted: #627369;
+    --green: #254c3e;
+    --green-hover: #173b2d;
+    --sage: #e7ede3;
+    --line: #dfe3d8;
+    --yellow: #f4c65a;
+    --red: #a42f26;
+    --radius: 22px;
 }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+a { color: var(--green); text-underline-offset: 4px; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+:focus-visible { outline: 3px solid #986a08; outline-offset: 4px; }
+::selection { background: #f4d782; color: var(--ink); }
+h1, h2, h3, p { margin-top: 0; }
+h1, h2, h3 { line-height: 1.18; letter-spacing: -.035em; }
+h2 { font-size: clamp(1.6rem, 2.7vw, 2.25rem); margin-bottom: 14px; }
+h3 { font-size: 1.2rem; }
+p { margin-bottom: 16px; }
+small { color: var(--muted); line-height: 1.6; }
+.hidden { display: none !important; }
+.skip-link { position: fixed; top: -100px; left: 20px; z-index: 2000; padding: 10px 20px; background: var(--green); color: white; border-radius: 12px; }
+.skip-link:focus { top: 12px; }
 
-/* Basiskleuren en typografie voor alle pagina’s. */
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f7f8;
-    color: #1f2933;
+/* De navigatie blijft bereikbaar zonder uitklapmenu op kleine schermen. */
+body > header { max-width: 1320px; margin: auto; padding: 26px 40px; display: flex; gap: 28px; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0; }
+.brand img { width: 48px; height: 48px; }
+.brand strong { display: block; font-size: 23px; font-weight: 750; line-height: 1.25; letter-spacing: -.8px; }
+.brand-dot, .footer-brand span { color: #b77b0b; }
+.brand small { display: block; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; margin-top: 4px; }
+nav { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+nav a { text-decoration: none; font-size: 13px; font-weight: 650; padding: 10px 13px; border-radius: 10px; white-space: nowrap; transition: background .18s, color .18s; }
+nav a:hover, nav a[aria-current="page"] { background: var(--sage); }
+nav .nav-cta { background: var(--green); color: var(--white); padding: 12px 18px; margin-left: 9px; }
+nav .nav-cta:hover, nav .nav-cta[aria-current="page"] { background: var(--green-hover); color: white; }
+nav .nav-cta span { margin-left: 10px; }
+nav .button { font-size: 12px; min-height: 40px; padding: 9px 12px; }
+main { max-width: 1240px; margin: 0 auto; padding: 0 40px 64px; min-height: 65vh; }
+.eyebrow { font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 16px; color: var(--muted); }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5b8063; box-shadow: 0 0 0 4px #5b806317; margin-right: 10px; flex-shrink: 0; }
+.button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 22px; padding: 13px 21px; border: 1px solid transparent; border-radius: 12px; background: var(--green); color: white; text-decoration: none; font-size: 14px; font-weight: 650; line-height: 1.5; transition: background .18s, transform .18s, box-shadow .18s; }
+.button:hover { background: var(--green-hover); box-shadow: 0 4px 12px #254c3e16; transform: translateY(-1px); }
+.secondary { color: var(--green); background: var(--sage); border-color: var(--line); }
+.secondary:hover { background: #dce5d6; }
+.text-link { display: inline-flex; align-items: center; gap: 12px; color: var(--green); font-weight: 650; font-size: 14px; text-decoration: none; }
+.text-link:hover { text-decoration: underline; }
+
+/* Een compacte introductie laat de weerkaart de hoofdrol spelen. */
+.home-intro { padding: 40px 0 16px; }
+.home-intro h1 { margin-bottom: 12px; font-size: clamp(1.9rem, 3vw, 2.4rem); font-weight: 650; }
+.home-intro p { margin: 0; color: var(--muted); font-size: 15px; }
+.network-summary { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 24px; color: var(--muted); font-size: 12px; }
+.network-summary strong { color: var(--ink); font-weight: 650; }
+.home-page nav .nav-cta { color: var(--green); background: var(--sage); }
+.home-page nav .nav-cta:hover { background: #dce5d6; }
+.home-page .map-card { border-radius: 16px; }
+.home-page .stations-section { margin: 36px 0 0; }
+.home-page .section-heading h2 { font-size: 23px; font-weight: 600; }
+.home-page .station-card { border-radius: 14px; }
+
+.section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 24px; }
+.section-heading .eyebrow { margin-bottom: 10px; }.section-heading h2 { margin: 0; }
+.map-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); overflow: hidden; }
+.map-toolbar { padding: 19px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.map-title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: 0; }.map-hint { color: var(--muted); font-size: 12px; }
+#map { height: 470px; width: 100%; background: #e9eee5; z-index: 0; border-block: 1px solid var(--line); }
+#mapStatus { margin: 0; padding: 13px 24px; color: var(--muted); font-size: 11px; min-height: 45px; }
+#mapStatus.error { color: var(--red); background: #fff2eb; }
+.leaflet-container { font-family: inherit; }.leaflet-popup-content-wrapper { border-radius: 16px; padding: 4px; color: var(--ink); }.leaflet-popup-content { line-height: 1.9; }.leaflet-popup-content strong { font-size: 16px; display: block; margin-bottom: 8px; }.leaflet-bar { border: 1px solid var(--line) !important; box-shadow: 0 4px 16px #254c3e13 !important; }.leaflet-bar a { color: var(--green); }
+.stations-section { margin: 54px 0; }.station-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.station-card { padding: 24px; border-radius: 18px; border: 1px solid var(--line); background: var(--white); min-width: 0; }
+.station-card h3 { margin-bottom: 5px; overflow-wrap: anywhere; }.station-card > p { font-size: 11px; color: var(--muted); }.station-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0; }.station-values div { min-width: 0; }.station-values dt { font-size: 10px; color: var(--muted); }.station-values dd { margin: 5px 0 0; font-size: 17px; font-weight: 650; overflow-wrap: anywhere; }.station-card .text-link { padding: 0; border: none; background: none; font-size: 12px; min-height: 30px; }
+.empty-state { grid-column: 1 / -1; padding: 32px; border: 1px dashed #c6cebf; border-radius: 18px; color: var(--muted); text-align: center; margin: 0; }
+
+/* Pagina-intro's, kaarten en het stationdashboard. */
+.page-intro { padding: 50px 0 16px; max-width: 720px; }.page-intro h1 { font-size: clamp(2.4rem, 4vw, 3.5rem); margin-bottom: 16px; font-weight: 650; }.page-intro > p:last-child { color: var(--muted); max-width: 590px; }.page-intro .eyebrow { margin-bottom: 14px; }
+.form-layout { display: grid; grid-template-columns: .9fr 1fr; gap: 72px; align-items: start; padding-top: 24px; }.form-layout > .register-card { width: 100%; }.form-layout > .page-intro { padding-top: 64px; }
+.register-card, .history-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 32px; }
+.register-card { max-width: 690px; margin: 24px auto; }.register-card > h2 { font-size: 25px; }.register-card > p, .history-card > p { color: var(--muted); font-size: 14px; }
+.card-kicker { display: inline-block; font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 1.5px; color: #5e775b; margin-bottom: 14px; }
+.account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; margin-top: 24px; }.account-grid > .register-card { width: 100%; max-width: none; margin: 0; }.account-grid > .history-card, .account-grid > .metrics-card { grid-column: 1 / -1; }.actuator-card { border-top: 4px solid var(--yellow); }.profile-card { border-top: 4px solid #8ca787; }
+.history-card { margin: 24px 0; min-width: 0; }.account-grid > .history-card { margin: 0; }
+.station-id-line code { display: inline-block; background: var(--sage); border-radius: 7px; padding: 3px 9px; color: var(--ink); }
+#accountStatus, #adminStatus { font-size: 13px; color: var(--muted); margin: 10px 0; }
+.error { color: var(--red); font-size: 14px; }.error:empty { display: none; }
+#actuatorStatus:not(:empty), #metricsStatus:not(:empty) { background: var(--sage); border-radius: 10px; padding: 11px 14px; font-size: 13px; }
+
+form { display: flex; flex-direction: column; gap: 9px; margin-top: 24px; }label { font-size: 13px; font-weight: 650; margin-top: 9px; }
+input, textarea, select { min-width: 0; color: var(--ink); background: #fcfcf8; border: 1px solid #cdd5c7; padding: 12px 14px; border-radius: 10px; font-size: 15px; transition: border-color .18s, box-shadow .18s; }
+input:hover, textarea:hover, select:hover { border-color: #8eaa89; }input:focus, textarea:focus, select:focus { border-color: #668e66; box-shadow: 0 0 0 3px #668e6612; }
+input::placeholder, textarea::placeholder { color: #7e887e; }textarea { width: 100%; font: 14px/1.8 "SFMono-Regular", Consolas, monospace; resize: vertical; }
+form .button { margin-top: 15px; }.register-card > label, .register-card > input { display: block; width: 100%; }.register-card > label { margin: 18px 0 8px; }.register-card > .button { margin-top: 14px; }
+form small { font-size: 12px; }.form-hint { background: #f4f1e5; border-left: 3px solid var(--yellow); padding: 12px 15px; border-radius: 0 10px 10px 0; font-size: 12px !important; }.result { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); }.result-item { margin: 18px 0; }.result-item strong { display: block; margin-bottom: 6px; }.result > .button { margin-top: 12px; }
+code { font-family: "SFMono-Regular", Consolas, monospace; font-size: .85em; overflow-wrap: anywhere; }pre { background: #223c32; color: #e9f1dd; padding: 22px; border-radius: 14px; overflow-x: auto; font: 12px/1.8 "SFMono-Regular", Consolas, monospace; }#codeSection { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 28px; }#codeSection h2 { font-size: 23px; margin-top: 26px; }
+#customMetricsList { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0; }#customMetricsList li { background: #f3f5ee; padding: 20px; border-radius: 14px; min-width: 0; }#customMetricsList p { font-size: 14px; font-weight: 600; }.metric-delete { display: block; margin-top: 14px; font-size: 12px; padding: 8px 12px; min-height: 36px; }
+.history-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }.history-controls label { margin: 0; }.table-scroll { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 12px; }table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }caption { text-align: left; color: var(--muted); padding: 12px 16px; font-size: 11px; }th, td { padding: 14px 16px; border-top: 1px solid var(--line); white-space: nowrap; }th { background: #f0f3e9; font-size: 11px; text-transform: uppercase; letter-spacing: .7px; font-weight: 650; }tbody tr:nth-child(even) { background: #f8f9f3; }tbody tr:hover { background: #eef2e8; }
+.admin-key { display: block; max-width: 28rem; white-space: normal; margin-top: 12px; }.danger { background: var(--red); margin-left: 8px; }.danger:hover { background: #86271f; }
+.history-graph { margin: 24px 0; padding: 24px 0; border-block: 1px solid var(--line); }.history-graph h3 { margin-bottom: 18px; }.graph-controls { margin-bottom: 20px; }.graph-controls select { min-width: 150px; }.graph-canvas { position: relative; width: 100%; height: 300px; }#graphStatus { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+body > footer { max-width: 1240px; margin: 0 auto; border-top: 1px solid var(--line); padding: 26px 40px 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px; font-size: 12px; color: var(--muted); }footer p { margin: 0; flex: 1; }.footer-brand { font-size: 17px; font-weight: 750; letter-spacing: -.7px; text-decoration: none; }footer > a:last-child { text-decoration: none; }
+
+@media (max-width: 1050px) {
+    body > header { flex-wrap: wrap; padding: 24px 32px; gap: 18px; }nav { justify-content: flex-start; }.station-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* Gedeelde paginakop met titel links en navigatie rechts. */
-header {
-    background: white;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5e7eb;
+@media (max-width: 720px) {
+    .home-intro { padding-top: 28px; }.map-hint { max-width: 155px; font-size: 10px; text-align: right; }
+    .form-layout { grid-template-columns: 1fr; gap: 0; padding-top: 0; }.form-layout > .page-intro { padding-top: 32px; }.form-layout > .register-card { margin-top: 12px; }
+    body > header { padding: 20px; gap: 19px; }.brand strong { font-size: 22px; }nav { width: 100%; gap: 3px; }nav a { padding: 9px 10px; font-size: 12px; }nav .nav-cta { margin-left: 0; padding: 9px 12px; }main { padding: 0 20px 40px; }
+    .section-heading { align-items: flex-start; flex-direction: column; gap: 12px; margin-bottom: 18px; }.section-heading h2 { font-size: 26px; }.map-toolbar { padding: 15px 16px; }.map-title { font-size: 12px; }#map { height: 390px; }#mapStatus { padding: 12px 16px; font-size: 10px; }.stations-section { margin: 34px 0; }.station-grid { grid-template-columns: 1fr; }.station-card { padding: 22px; }.page-intro { padding: 32px 0 10px; }.page-intro h1 { font-size: 37px; }.register-card, .history-card { padding: 24px; border-radius: 18px; }.register-card { margin: 20px auto; }.register-card > h2 { font-size: 24px; }.account-grid { grid-template-columns: 1fr; gap: 20px; }.account-grid > .history-card, .account-grid > .metrics-card { grid-column: auto; }#customMetricsList { grid-template-columns: 1fr; }.graph-canvas { height: 250px; }.graph-controls { align-items: flex-start; }.graph-controls label { width: 100%; }.history-controls select { max-width: 100%; }.graph-controls select { width: 100%; }body > footer { padding: 22px 20px; gap: 10px 18px; }footer p { flex-basis: 100%; order: 3; }
 }
-
-header h1 {
-    margin: 0 0 4px;
-}
-
-header p {
-    margin: 0;
-    color: #667085;
-}
-
-/* Dezelfde knopstijl wordt gebruikt voor links en formulierknoppen. */
-.button {
-    text-decoration: none;
-    background: #1f2933;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-}
-
-/* Centreer de inhoud en begrens de breedte op grote schermen. */
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px;
-}
-
-.intro h2 {
-    margin-bottom: 6px;
-}
-
-.intro p {
-    margin-top: 0;
-    color: #667085;
-}
-
-/* Leaflet heeft een expliciete hoogte nodig om de kaart zichtbaar te maken. */
-#map {
-    width: 100%;
-    height: 600px;
-    margin-top: 25px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #e5e7eb;
-}
-/* Kaartvormige container voor registratie en de ESP32-codegenerator. */
-.register-card {
-    max-width: 650px;
-    margin: 20px auto;
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-}
-
-/* Plaats formuliervelden onder elkaar met een vaste tussenruimte. */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 25px;
-}
-
-label {
-    font-weight: bold;
-    margin-top: 8px;
-}
-
-input {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #d0d5dd;
-    font-size: 16px;
-}
-
-textarea {
-    width: 100%;
-    min-width: 0;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #d0d5dd;
-    font: 16px monospace;
-    resize: vertical;
-}
-
-form .button {
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 15px;
-}
-
-.secondary {
-    background: #e5e7eb;
-    color: #1f2933;
-}
-
-small {
-    color: #667085;
-}
-
-/* Maak het registratieantwoord visueel los van de ingevoerde gegevens. */
-.result {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
-}
-
-.result-item {
-    margin: 18px 0;
-}
-
-.result-item strong {
-    display: block;
-    margin-bottom: 6px;
-}
-
-/* Lange API-keys mogen afbreken; codeblokken blijven horizontaal verschuifbaar. */
-code {
-    word-break: break-all;
-}
-
-pre {
-    background: #1f2933;
-    color: white;
-    padding: 18px;
-    border-radius: 8px;
-    overflow-x: auto;
-}
-
-/* JavaScript gebruikt deze klasse om resultaten en foutloos gegenereerde code te tonen. */
-.hidden {
-    display: none;
-}
-
-/* Foutmeldingen bij formulieren en het ophalen van kaartgegevens. */
-.error {
-    color: #b42318;
-    margin-top: 15px;
-}
-/* Houd navigatielinks naast elkaar zolang het scherm breed genoeg is. */
-nav {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-nav a {
-    text-decoration: none;
-    color: #1f2933;
-    font-weight: 600;
-}
-
-nav a:hover {
-    text-decoration: underline;
-}
-
-/* De codegenerator gebruikt ook velden direct in de kaart, buiten een form-element. */
-.register-card > label,
-.register-card > input {
-    display: block;
-    width: 100%;
-}
-
-/* Op telefoons komen titel en navigatie onder elkaar en krijgt de kaart een passende hoogte. */
-@media (max-width: 700px) {
-    header { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
-    nav { flex-wrap: wrap; gap: 12px; }
-    main { padding: 16px; }
-    .register-card { padding: 20px; }
-    #map { height: 60vh; }
-}
-
-/* Accountgeschiedenis blijft ook op een klein scherm leesbaar en horizontaal schuifbaar. */
-.history-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin: 24px 0; }
-.history-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-select { font: inherit; padding: 10px; border: 1px solid #d0d5dd; border-radius: 8px; }
-.table-scroll { overflow-x: auto; margin: 16px 0; }
-table { width: 100%; border-collapse: collapse; text-align: left; }
-caption { text-align: left; color: #667085; padding: 8px 0; }
-th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-button { cursor: pointer; font: inherit; border: none; }
-button:disabled { opacity: 0.6; cursor: wait; }
-nav { flex-wrap: wrap; }
-
-/* Houd de verwijderactie los van het MQTT-topic op de accountpagina. */
-.metric-delete { display: block; margin: 12px 0 20px; }
-
-/* Sleutels worden alleen op verzoek getoond; acties blijven visueel van elkaar gescheiden. */
-.admin-key { display: block; max-width: 28rem; white-space: normal; margin-top: 12px; }
-.danger { background: #b42318; margin-left: 8px; }
-
-/* De grafiek gebruikt dezelfde rustige opmaak als de rest van Mijn account. */
-.history-graph {
-    margin: 24px 0;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e5e7eb;
-}
-.history-graph h3 { margin: 0 0 16px; }
-.graph-controls { margin-bottom: 12px; }
-.graph-controls label { margin: 0; }
-.graph-controls select { min-width: 150px; }
-.graph-canvas { position: relative; width: 100%; height: 280px; }
-#graphStatus { margin: 10px 0 0; color: #667085; font-size: 14px; }
-@media (max-width: 700px) {
-    .graph-canvas { height: 240px; }
-    .graph-controls { align-items: flex-start; }
-    .graph-controls label { width: 100%; }
-    .graph-controls select { width: 100%; }
-    .history-card { padding: 16px; }
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }*, *::before, *::after { animation: none !important; transition: none !important; }
 }

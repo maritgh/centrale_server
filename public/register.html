@@ -6,28 +6,32 @@
 
     <title>Home Station aanmelden</title>
 
+    <meta name="theme-color" content="#254c3e">
+    <link rel="icon" href="/assets/weather-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
+<a class="skip-link" href="#main-content">Ga naar de inhoud</a>
 
 <header>
-    <div>
-        <h1>Home Station Network</h1>
-        <p>Meld jouw Home Station aan</p>
-    </div>
-
-    <nav>
+    <a class="brand" href="/" aria-label="Home Station — naar de weerkaart">
+        <img src="/assets/weather-mark.svg" width="48" height="48" alt="">
+        <span><strong>Home Station<span class="brand-dot">.</span></strong><small>Samen meten, meer weten</small></span>
+    </a>
+    <nav aria-label="Hoofdnavigatie">
         <a href="/">Weerkaart</a>
-        <a href="/register.html">Station aanmelden</a>
-        <a href="/connect.html">Hoe verstuur ik data?</a>
-        <a href="/account.html">Mijn account</a>
+        <a href="/connect.html">ESP32 verbinden</a>
+        <a href="/account.html">Mijn station</a>
+        <a href="/register.html" aria-current="page" class="nav-cta">Station aanmelden <span aria-hidden="true">↗</span></a>
     </nav>
 </header>
-<main>
+<main id="main-content" class="form-layout">
+    <section class="page-intro"><p class="eyebrow">Jouw station doet mee</p><h1>Een eigen plek op de weerkaart.</h1><p>Meld je Home Station aan. Je ontvangt meteen de gegevens om je ESP32 te verbinden.</p></section>
 
     <section class="register-card">
 
+        <span class="card-kicker">Klaar voor je eerste meting?</span>
         <h2>Station aanmelden</h2>
 
         <p>
@@ -125,6 +129,7 @@
     </section>
 
 </main>
+<footer><a class="footer-brand" href="/">Home Station<span>.</span></a><p>Gemaakt om samen het weer te ontdekken.</p><a href="/admin.html">Beheer <span aria-hidden="true">↗</span></a></footer>
 
 <!-- Het script koppelt het formulier aan de registratie-API en vult het resultaat in. -->
 <script src="/js/register.js"></script>

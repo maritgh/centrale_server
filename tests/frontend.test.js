@@ -6,29 +6,39 @@ const path = require("node:path");
 
 // Kleine vervanger voor een DOM-element, met alleen de browserfuncties die we gebruiken.
 function element() {
-  return { value: "", textContent: "", children: [], classList: { add() {}, remove() {}, toggle() {} },
-    appendChild(child) { this.children.push(child); }, addEventListener() {} };
+  return { value: "", textContent: "", children: [], listeners: {}, classList: { add() {}, remove() {}, toggle() {} },
+    appendChild(child) { child.parent = this; this.children.push(child); },
+    remove() { this.parent.children.splice(this.parent.children.indexOf(this), 1); },
+    querySelector(selector) { return this.children.find(child => "." + child.className === selector); },
+    scrollIntoView() { this.scrolled = true; },
+    addEventListener(type, callback) { this.listeners[type] = callback; } };
 }
 // Lees het echte browserscript, zodat de test dezelfde code uitvoert als de website.
 function source(name) { return fs.readFileSync(path.join(__dirname, "..", "public", "js", name), "utf8"); }
 
 test("map treats station names as text and updates existing markers on refresh", async () => {
-  const elements = { mapStatus: element() };
+  const elements = Object.fromEntries(["mapStatus", "map", "stationCount", "reportingCount", "stationList"].map(id => [id, element()]));
   let popup;
   let created = 0;
   let updated = 0;
+  let selectedLocation;
+  let popupOpened = false;
+  let unavailable = false;
   const timers = [];
   // Deze naam lijkt op HTML; de popup moet hem uitsluitend als tekst behandelen.
   const station = { id: "test", name: '<img src=x onerror="alert(1)">', latitude: 52, longitude: 5, temperature: 20, custom_metrics: [{ name: "Luchtdruk <test>", unit: "hPa", value: 1013.2 }] };
+  let stations = [station];
+  const mapView = { setView(location, zoom) { selectedLocation = { location, zoom }; return this; } };
   // Boots browser, kaartbibliotheek en netwerk na, zonder een echte browser te openen.
   const context = vm.createContext({
     document: { getElementById(id) { return elements[id]; }, createElement: element },
-    L: { map() { return { setView() { return {}; } }; }, tileLayer() { return { addTo() {} }; }, marker() {
+    L: { map() { return mapView; }, tileLayer() { return { addTo() {} }; }, marker() {
       created++;
-      return { addTo() { return this; }, bindPopup(value) { popup = value; return this; }, setLatLng() { return this; }, setPopupContent(value) { popup = value; updated++; }, remove() {} };
+      return { addTo() { return this; }, bindPopup(value) { popup = value; return this; }, setLatLng() { return this; }, setPopupContent(value) { popup = value; updated++; }, remove() {},
+        getLatLng() { return [52, 5]; }, openPopup() { popupOpened = true; } };
     } },
-    fetch: async () => ({ ok: true, json: async () => [station] }),
-    setTimeout(callback, delay) { timers.push({ callback, delay }); }, clearTimeout() {}, AbortController, console, Date,
+    fetch: async () => ({ ok: !unavailable, json: async () => stations }),
+    setTimeout(callback, delay) { timers.push({ callback, delay }); }, clearTimeout() {}, AbortController, console: { error() {} }, Date,
   });
   vm.runInContext(source("map.js"), context);
   await new Promise(resolve => setImmediate(resolve));
@@ -36,12 +46,40 @@ test("map treats station names as text and updates existing markers on refresh",
   assert.equal(created, 1);
   assert.ok(popup.children.some(child => child.textContent === "Luchtdruk <test>: 1013.2 hPa"));
   assert.ok(timers.some(timer => timer.delay === 15000));
+  assert.equal(elements.stationCount.textContent, "1");
+  assert.equal(elements.reportingCount.textContent, "1");
+  const card = elements.stationList.children[0];
+  assert.equal(card.children[0].textContent, station.name);
+  assert.equal(card.children[2].children[0].children[1].textContent, "20 °C");
+  assert.equal(card.children[2].children[1].children[1].textContent, "—");
+  card.children[3].listeners.click();
+  assert.equal(selectedLocation.zoom, 11);
+  assert.deepEqual(Array.from(selectedLocation.location), [52, 5]);
+  assert.equal(popupOpened, true);
+  assert.equal(elements.map.scrolled, true);
   // Een verversing hoort de bestaande marker bij te werken in plaats van er een toe te voegen.
   station.temperature = 25;
   await vm.runInContext("loadStations()", context);
   assert.equal(created, 1);
   assert.equal(updated, 1);
   assert.ok(popup.children.some(child => child.textContent.includes("25 °C")));
+  assert.equal(elements.stationList.children[0], card); // De knop behoudt zijn focus bij verversen.
+  assert.equal(card.children[2].children[0].children[1].textContent, "25 °C");
+  station.temperature = 0;
+  await vm.runInContext("loadStations()", context);
+  assert.equal(card.children[2].children[0].children[1].textContent, "0 °C");
+  station.temperature = null;
+  station.custom_metrics = [];
+  await vm.runInContext("loadStations()", context);
+  assert.equal(elements.reportingCount.textContent, "0");
+  stations = [{ ...station, latitude: null }];
+  await vm.runInContext("loadStations()", context);
+  assert.equal(elements.stationCount.textContent, "0");
+  assert.equal(elements.stationList.children.length, 1);
+  assert.match(elements.stationList.children[0].textContent, /Nog geen stations/);
+  unavailable = true;
+  await vm.runInContext("loadStations()", context);
+  assert.match(elements.stationList.children[0].textContent, /opnieuw/);
 });
 
 // Controleer de gegenereerde MQTT-code en de invoervalidatie van het brokeradres.
@@ -58,6 +96,7 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
   vm.runInContext(source("connect.js"), context);
   assert.equal(elements.serverUrlInput.value, "mqtt://192.168.1.10:8883");
   assert.equal(elements.endpoint.textContent, "homestation/test/temperature\nhomestation/test/humidity\nhomestation/test/windSpeed");
+  assert.equal(elements.actuatorEndpoint.textContent, "homestation/test/actuator");
   const code = elements.arduinoCode.textContent;
   assert.ok(code.includes('String("{\\"apiKey\\":\\"")'));
   assert.ok(code.includes('publishHomeStationValue("temperature", temperature)'));
@@ -68,6 +107,12 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
   assert.ok(!code.includes("mqttUsername"));
   assert.ok(!code.includes("mqttPassword"));
   assert.ok(!code.includes("HTTPClient"));
+  assert.ok(code.includes("#include <ArduinoJson.h>"));
+  assert.ok(code.includes('String actuatorTopic = String("homestation/") + stationId + "/actuator";'));
+  assert.ok(code.includes("mqttClient.setCallback(onHomeStationMqttMessage)"));
+  assert.ok(code.includes("mqttClient.subscribe(actuatorTopic.c_str(), 0)"));
+  assert.ok(code.includes("mqttClient.setBufferSize(1280)"));
+  assert.ok(code.includes("deserializeJson(command, reinterpret_cast<const char*>(payload), length)"));
   // Weiger HTTP-adressen, topicpaden, ongeldige poorten en inloggegevens in het adres.
   elements.customMetricInput.value = "luchtdruk, lichtsterkte";
   vm.runInContext("generateCode()", context);
@@ -91,6 +136,53 @@ test("ESP32 code publishes three authenticated MQTT topics and validates broker 
   assert.ok(elements.arduinoCode.textContent.includes("mqttNetwork.setCACert(rootCACertificate)"));
   assert.ok(elements.arduinoCode.textContent.includes("mqttPort = 8883"));
   assert.ok(!elements.arduinoCode.textContent.includes("setInsecure"));
+});
+
+test("ESP32 page shows copyable example code without credentials or browser storage", async () => {
+  for (const [origin, blockedStorage] of [["http://localhost:3001", false], ["https://weather.example.com", true]]) {
+    const elements = {};
+    let hidden = true;
+    let copied;
+    const section = element();
+    section.classList = { add() { hidden = true; }, remove() { hidden = false; } };
+    elements.codeSection = section;
+    const context = vm.createContext({
+      document: { getElementById(id) { return elements[id] ||= element(); } },
+      window: { location: { origin }, isSecureContext: true },
+      sessionStorage: { getItem() { if (blockedStorage) throw new Error("Storage blocked"); return null; } },
+      URL, navigator: { clipboard: { async writeText(value) { copied = value; } } }, setTimeout() {},
+    });
+    vm.runInContext(source("connect.js"), context);
+    assert.equal(hidden, false);
+    assert.equal(elements.stationIdInput.value, "");
+    assert.equal(elements.apiKeyInput.value, "");
+    assert.equal(elements.connectError.textContent, "");
+    assert.match(elements.codeStatus.textContent, /Voorbeeldcode/);
+    assert.match(elements.endpoint.textContent, /homestation\/jouw-station-id\/temperature/);
+    assert.equal(elements.actuatorEndpoint.textContent, "homestation/jouw-station-id/actuator");
+    assert.ok(elements.arduinoCode.textContent.includes("const int actuatorLedPin = -1;"));
+    assert.ok(elements.arduinoCode.textContent.includes("handleHomeStationActuator"));
+    assert.ok(elements.arduinoCode.textContent.includes('const char* apiKey = "JOUW_API_KEY";'));
+    assert.ok(!elements.arduinoCode.textContent.includes('mqttHost = "localhost"'));
+    assert.equal(elements.arduinoCode.textContent.includes("WiFiClientSecure"), origin.startsWith("https:"));
+    await elements.copyButton.listeners.click();
+    assert.equal(copied, elements.arduinoCode.textContent);
+    // De bestaande knop vervangt het voorbeeld door gevalideerde eigen gegevens.
+    elements.stationIdInput.value = "eigen-station";
+    elements.apiKeyInput.value = "b".repeat(64);
+    elements.serverUrlInput.value = "mqtt://192.168.1.10:8883";
+    elements.generateButton.listeners.click();
+    assert.equal(hidden, false);
+    assert.match(elements.codeStatus.textContent, /gegevens die je hierboven/);
+    assert.match(elements.endpoint.textContent, /homestation\/eigen-station\/temperature/);
+    assert.equal(elements.actuatorEndpoint.textContent, "homestation/eigen-station/actuator");
+    assert.ok(elements.arduinoCode.textContent.includes('const char* apiKey = "' + "b".repeat(64) + '";'));
+    assert.ok(!elements.arduinoCode.textContent.includes("JOUW_API_KEY"));
+    elements.apiKeyInput.value = "invalid";
+    elements.generateButton.listeners.click();
+    assert.equal(hidden, true);
+    assert.match(elements.connectError.textContent, /API-key/);
+  }
 });
 
 // Controleer de accountbediening met dezelfde browsercode, zonder netwerk of echte API-key.

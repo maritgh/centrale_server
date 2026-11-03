@@ -9,6 +9,7 @@ const endpointElement = document.getElementById("endpoint");
 const headerExampleElement = document.getElementById("headerExample");
 const arduinoCodeElement = document.getElementById("arduinoCode");
 const connectError = document.getElementById("connectError");
+const codeStatus = document.getElementById("codeStatus");
 // Neem dezelfde computer als de website als uitgangspunt; een HTTPS-site gebruikt de TLS-broker.
 const pageUrl = new URL(window.location.origin);
 serverUrlInput.value = pageUrl.protocol === "https:"
@@ -51,11 +52,18 @@ function generateCode() {
         connectError.textContent = "Een ESP32 kan localhost niet bereiken. Vul het LAN-IP van je broker of het publieke brokeradres in.";
         return;
     }
+    renderCode({ stationId, apiKey, base, customSlugs });
+    return true;
+}
+
+// Gebruik dezelfde generator voor het invulvoorbeeld en de persoonlijke code.
+function renderCode({ stationId, apiKey, base, customSlugs, example = false }) {
     // mqtts gebruikt TLS; zonder expliciete poort kiezen we de gebruikelijke standaard.
     const secure = base.protocol === "mqtts:";
     const port = Number(base.port || 8883);
     const topicBase = `homestation/${stationId}/`;
     endpointElement.textContent = ["temperature", "humidity", "windSpeed", ...customSlugs.map(slug => "custom/" + slug)].map(metric => topicBase + metric).join("\n");
+    document.getElementById("actuatorEndpoint").textContent = topicBase + "actuator";
     headerExampleElement.textContent = JSON.stringify({ apiKey, value: 20.4 }, null, 2);
     const tls = secure ? `#include <WiFiClientSecure.h>
 // Vul het PEM-rootcertificaat van de broker in en synchroniseer de klok via NTP.
@@ -67,30 +75,77 @@ PASTE_ROOT_CA_CERTIFICATE_HERE
     // de ingevulde tekst een stringliteral met ge-escapete aanhalingstekens.
     arduinoCodeElement.textContent = `#include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include <math.h>
+#include <string.h>
 ${tls}
 // De API-key identificeert het station; de brokergegevens regelen de MQTT-toegang.
 const char* stationId = ${JSON.stringify(stationId)};
 const char* apiKey = ${JSON.stringify(apiKey)};
 const char* mqttHost = ${JSON.stringify(base.hostname.replace(/^\[|\]$/g, ""))};
 const int mqttPort = ${port};
+// Kies de GPIO van een gewone digitale led. -1 verwerkt opdrachten alleen in de seriële monitor.
+// Een adresseerbare RGB-led vraagt om eigen aanstuurcode in handleHomeStationActuator().
+const int actuatorLedPin = -1;
+const bool actuatorLedActiveLow = false;
+const unsigned int maxActuatorPayload = 1024;
+String actuatorTopic = String("homestation/") + stationId + "/actuator";
 
 ${secure ? "WiFiClientSecure" : "WiFiClient"} mqttNetwork;
 PubSubClient mqttClient(mqttNetwork);
 unsigned long lastMqttAttempt = 0;
 bool mqttAttempted = false;
+bool mqttBufferReady = false;
+
+// Pas deze functie aan voor jouw actuator. Voorbeeld vanuit Mijn station: {"led":true}.
+void handleHomeStationActuator(JsonObjectConst command) {
+  // Alleen echte JSON-booleans accepteren: false schakelt uit, true schakelt in.
+  if (!command["led"].is<bool>()) {
+    Serial.println("Actuator: gebruik een boolean, bijvoorbeeld {\\"led\\":true}");
+    return;
+  }
+  bool enabled = command["led"].as<bool>();
+  if (actuatorLedPin < 0) {
+    Serial.println(enabled ? "LED aan gevraagd; stel actuatorLedPin in" : "LED uit gevraagd; stel actuatorLedPin in");
+    return;
+  }
+  digitalWrite(actuatorLedPin, (enabled != actuatorLedActiveLow) ? HIGH : LOW);
+  Serial.println(enabled ? "LED ingeschakeld" : "LED uitgeschakeld");
+}
+
+void onHomeStationMqttMessage(char* topic, byte* payload, unsigned int length) {
+  if (strcmp(topic, actuatorTopic.c_str()) != 0) return;
+  if (length == 0 || length > maxActuatorPayload) {
+    Serial.println("Actuator: bericht moet 1 tot 1024 bytes bevatten");
+    return;
+  }
+  JsonDocument command;
+  // MQTT-payloads eindigen niet altijd op een nulbyte; lees alleen de opgegeven lengte.
+  DeserializationError error = deserializeJson(command, reinterpret_cast<const char*>(payload), length);
+  if (error || !command.is<JsonObject>()) {
+    Serial.println("Actuator: ongeldig JSON-object");
+    return;
+  }
+  handleHomeStationActuator(command.as<JsonObjectConst>());
+}
 
 // Roep dit eenmalig aan in setup(), na je WiFi-instellingen.
 void setupHomeStationMqtt() {
   ${secure ? "mqttNetwork.setCACert(rootCACertificate);" : ""}
   mqttClient.setServer(mqttHost, mqttPort);
-  // De buffer moet ruimte bieden aan zowel het topic als het JSON-bericht.
-  mqttClient.setBufferSize(512);
+  mqttClient.setCallback(onHomeStationMqttMessage);
+  // 1024 bytes JSON plus de topicnaam en MQTT-headers moeten in de buffer passen.
+  mqttBufferReady = mqttClient.setBufferSize(1280);
+  if (!mqttBufferReady) Serial.println("MQTT: onvoldoende geheugen voor de berichtbuffer");
+  if (actuatorLedPin >= 0) {
+    pinMode(actuatorLedPin, OUTPUT);
+    digitalWrite(actuatorLedPin, actuatorLedActiveLow ? HIGH : LOW);
+  }
 }
 
 // Roep dit bij elke loop() aan, ook tussen metingen door.
 void loopHomeStationMqtt() {
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (!mqttBufferReady || WiFi.status() != WL_CONNECTED) return;
   if (!mqttClient.connected()) {
     // Probeer maximaal eenmaal per vijf seconden opnieuw te verbinden.
     if (mqttAttempted && millis() - lastMqttAttempt < 5000) return;
@@ -104,8 +159,14 @@ void loopHomeStationMqtt() {
       Serial.println(mqttClient.state());
       return;
     }
+    // Abonneer opnieuw na iedere herverbinding, uitsluitend op het eigen station.
+    if (!mqttClient.subscribe(actuatorTopic.c_str(), 0)) {
+      Serial.println("MQTT: abonneren op actuator-topic mislukt");
+      mqttClient.disconnect();
+      return;
+    }
   }
-  // Verwerk netwerkverkeer en houd de verbinding met de broker actief.
+  // Ontvang actuatoropdrachten en houd de verbinding met de broker actief.
   mqttClient.loop();
 }
 
@@ -145,7 +206,19 @@ void sendHomeStationData(float temperature, float humidity, float windSpeed) {
     ? "Drie MQTT-berichten verzonden" : "MQTT verzenden mislukt");
 }`;
     document.getElementById("httpsNotice").classList.toggle("hidden", !secure);
+    codeStatus.textContent = example
+        ? "Voorbeeldcode: vervang jouw-station-id en JOUW_API_KEY door je eigen gegevens. Controleer ook het brokeradres."
+        : "Deze code gebruikt de gegevens die je hierboven hebt ingevuld.";
     codeSection.classList.remove("hidden");
+}
+
+function showExampleCode() {
+    const base = new URL(serverUrlInput.value);
+    // Een lokaal websiteadres is geen bruikbaar brokeradres voor de ESP32.
+    if (["localhost", "127.0.0.1", "[::1]", "0.0.0.0"].includes(base.hostname)) base.hostname = "jouw-broker.example";
+    const customSlugs = [...new Set(document.getElementById("customMetricInput").value.split(",")
+        .map(value => value.trim()).filter(slug => /^[a-z][a-z0-9-]{0,39}$/.test(slug)))].slice(0, 50);
+    renderCode({ stationId: "jouw-station-id", apiKey: "JOUW_API_KEY", base, customSlugs, example: true });
 }
 generateButton.addEventListener("click", generateCode);
 copyButton.addEventListener("click", async () => {
@@ -174,4 +247,5 @@ const requestedStationId = requestedParams.get("station");
 if (requestedStationId && /^[a-z0-9-]{1,100}$/.test(requestedStationId)) stationIdInput.value = requestedStationId;
 const requestedCustomSlugs = requestedParams.get("custom");
 if (requestedCustomSlugs) document.getElementById("customMetricInput").value = requestedCustomSlugs;
-if (stationIdInput.value && apiKeyInput.value) generateCode();
+// Toon ook zonder registratie of browseropslag direct een kopieerbaar voorbeeld.
+if (!stationIdInput.value || !apiKeyInput.value || !generateCode()) showExampleCode();
