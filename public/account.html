@@ -4,27 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mijn account — Home Station</title>
+    <meta name="theme-color" content="#254c3e">
+    <link rel="icon" href="/assets/weather-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<a class="skip-link" href="#main-content">Ga naar de inhoud</a>
 <header>
-    <div><h1>Home Station Network</h1><p>Beheer je station en bekijk je metingen</p></div>
-    <nav>
+    <a class="brand" href="/" aria-label="Home Station — naar de weerkaart">
+        <img src="/assets/weather-mark.svg" width="48" height="48" alt="">
+        <span><strong>Home Station<span class="brand-dot">.</span></strong><small>Samen meten, meer weten</small></span>
+    </a>
+    <nav aria-label="Hoofdnavigatie">
         <a href="/">Weerkaart</a>
-        <a href="/register.html">Station aanmelden</a>
-        <a href="/connect.html">Hoe verstuur ik data?</a>
-        <a href="/account.html" aria-current="page">Mijn account</a>
-        <a href="/admin.html">Beheer</a>
-        <!-- Alleen zichtbaar als de server een geldige stationssessie bevestigt. -->
+        <a href="/connect.html">ESP32 verbinden</a>
+        <a href="/account.html" aria-current="page">Mijn station</a>
+        <a href="/register.html" class="nav-cta">Station aanmelden <span aria-hidden="true">↗</span></a>
         <button id="logoutButton" class="button secondary hidden" type="button">Uitloggen</button>
     </nav>
 </header>
-<main>
+<main id="main-content">
+    <section class="page-intro"><p class="eyebrow">Jouw eigen weerplek</p><h1>Hallo, weerkijker.</h1><p>Beheer je station, ontdek je meetgeschiedenis en geef je actuator een seintje.</p></section>
     <!-- De API bepaalt of er een geldige sessie is; verborgen inhoud bevat geen accountgegevens. -->
     <p id="accountStatus" role="status">Account laden…</p>
     <p id="accountError" class="error" role="alert"></p>
     <section id="loginSection" class="register-card hidden">
-        <h2>Inloggen</h2>
+        <span class="card-kicker">Welkom terug</span>
+        <h2>Even inloggen.</h2>
         <p>Gebruik de naam van je station en de API-key die je bij registratie hebt ontvangen.</p>
         <form id="loginForm">
             <label for="loginName">Stationsnaam</label>
@@ -34,10 +40,11 @@
             <button class="button" type="submit">Inloggen</button>
         </form>
     </section>
-    <section id="accountSection" class="hidden">
-        <section class="register-card">
+    <section id="accountSection" class="account-grid hidden">
+        <section class="register-card profile-card">
+            <span class="card-kicker">01 / Je station</span>
             <h2 id="accountTitle">Mijn station</h2>
-            <p>Station ID: <code id="accountStationId"></code></p>
+            <p class="station-id-line">Station ID: <code id="accountStationId"></code></p>
             <p>Bij een nieuwe naam verandert ook je station-ID. Je API-key en opgeslagen metingen blijven behouden. Pas daarna je ESP32 aan naar de nieuwe MQTT-topics.</p>
             <form id="profileForm">
                 <label for="profileName">Stationsnaam</label>
@@ -49,8 +56,24 @@
                 <button class="button" type="submit">Wijzigingen opslaan</button>
             </form>
         </section>
+        <section class="register-card actuator-card">
+            <span class="card-kicker">02 / Van scherm naar actie</span>
+            <h2>Actuator aansturen</h2>
+            <p>Stuur een JSON-object naar je eigen station via <code id="actuatorTopic"></code>. Laat je ESP32 op dit topic abonneren en de opdracht verwerken.</p>
+            <p class="form-hint">Gebruik sleutels en waarden, bijvoorbeeld <code>{"led":true}</code>.</p>
+            <form id="actuatorForm">
+                
+                <label for="actuatorPayload">JSON-bericht</label>
+                <textarea id="actuatorPayload" rows="7" spellcheck="false" placeholder='{"led":true}' required></textarea>
+                <small>Maximaal 1024 bytes. De inhoud moet passen bij de code op jouw ESP32.</small>
+                <button class="button" type="submit">JSON versturen</button>
+            </form>
+            <p id="actuatorStatus" role="status" aria-live="polite"></p>
+            <p>Het bericht wordt eenmalig verstuurd en niet bewaard voor later. Een verzendmelding bevestigt niet dat je ESP32 de opdracht heeft uitgevoerd.</p>
+        </section>
         <!-- Een grootheid beschrijft een numerieke sensorwaarde; de ESP32 levert de echte metingen. -->
-        <section class="register-card">
+        <section class="register-card metrics-card">
+            <span class="card-kicker">03 / Ruimte voor jouw sensoren</span>
             <h2>Eigen grootheden</h2>
             <p>Voeg bijvoorbeeld luchtdruk in hPa, lichtsterkte in lux of bodemvocht in % toe.</p>
             <form id="metricForm">
@@ -71,6 +94,7 @@
         </section>
         <!-- Metingen staan per topic in de geschiedenis, met de ontvangsttijd op de server. -->
         <section class="history-card">
+            <span class="card-kicker">04 / Elk meetmoment telt</span>
             <h2>Mijn meetgeschiedenis</h2>
             <p>Nieuwe metingen worden bewaard vanaf de invoering van deze geschiedenis. Eerdere meetreeksen zijn niet beschikbaar.</p>
             <section class="history-graph" aria-labelledby="graphHeading">
@@ -116,6 +140,7 @@
         </section>
     </section>
 </main>
+<footer><a class="footer-brand" href="/">Home Station<span>.</span></a><p>Gemaakt om samen het weer te ontdekken.</p><a href="/admin.html">Beheer <span aria-hidden="true">↗</span></a></footer>
 <!-- De grafiek gebruikt Chart.js; de overige accountfuncties blijven zelfstandig werken. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 <script src="/js/history-graph.js"></script>

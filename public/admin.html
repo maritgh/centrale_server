@@ -4,21 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beheer — Home Station</title>
+    <meta name="theme-color" content="#254c3e">
+    <link rel="icon" href="/assets/weather-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<a class="skip-link" href="#main-content">Ga naar de inhoud</a>
 <header>
-    <div><h1>Home Station Network</h1><p>Stationsbeheer</p></div>
-    <nav><a href="/">Weerkaart</a><a href="/account.html">Mijn account</a><a href="/admin.html" aria-current="page">Beheer</a>
+    <a class="brand" href="/" aria-label="Home Station — naar de weerkaart">
+        <img src="/assets/weather-mark.svg" width="48" height="48" alt="">
+        <span><strong>Home Station<span class="brand-dot">.</span></strong><small>Samen meten, meer weten</small></span>
+    </a>
+    <nav aria-label="Hoofdnavigatie">
+        <a href="/">Weerkaart</a>
+        <a href="/connect.html">ESP32 verbinden</a>
+        <a href="/account.html">Mijn station</a>
+        <a href="/register.html" class="nav-cta">Station aanmelden <span aria-hidden="true">↗</span></a>
+        <a href="/admin.html" aria-current="page">Beheer</a>
         <button id="adminLogout" type="button" class="button secondary hidden">Uitloggen als beheerder</button>
     </nav>
 </header>
-<main>
+<main id="main-content">
+    <section class="page-intro"><p class="eyebrow">Achter de schermen</p><h1>Een goed geregeld netwerk.</h1><p>Alle stations op één plek. Houd het netwerk overzichtelijk en help je weerkijkers op weg.</p></section>
     <p id="adminStatus" role="status">Beheer laden…</p>
     <p id="adminError" class="error" role="alert"></p>
     <!-- De pagina bevat geen sleutels: de server levert ze alleen na een geldige adminlogin. -->
     <section id="adminLoginSection" class="register-card hidden">
-        <h2>Inloggen als beheerder</h2>
+        <span class="card-kicker">Alleen voor beheerders</span>
+        <h2>Welkom achter de schermen.</h2>
         <p>Gebruik je aparte beheerinloggegevens. Een stationsnaam en API-key geven hier geen toegang.</p>
         <form id="adminLoginForm">
             <label for="adminUsername">Beheerdersnaam</label>
@@ -47,6 +60,7 @@
         <button id="adminMore" type="button" class="button secondary hidden">Meer stations laden</button>
     </section>
 </main>
+<footer><a class="footer-brand" href="/">Home Station<span>.</span></a><p>Gemaakt om samen het weer te ontdekken.</p><a href="/admin.html">Beheer <span aria-hidden="true">↗</span></a></footer>
 <script src="/js/admin.js"></script>
 </body>
 </html>

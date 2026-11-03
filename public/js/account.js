@@ -31,6 +31,9 @@ function showLoggedOut() {
     for (const id of ["profileName", "profileLatitude", "profileLongitude"]) accountElement(id).value = "";
     accountElement("accountTitle").textContent = "Mijn station";
     accountElement("accountStationId").textContent = "";
+    accountElement("actuatorTopic").textContent = "";
+    accountElement("actuatorPayload").value = "";
+    accountElement("actuatorStatus").textContent = "";
 }
 
 // Verstuur geen geheimen in URL's en toon sessieverloop als een nieuwe login.
@@ -60,6 +63,8 @@ function showStation(station) {
     accountElement("logoutButton").classList.remove("hidden");
     accountElement("accountTitle").textContent = station.name;
     accountElement("accountStationId").textContent = station.id;
+    accountElement("actuatorTopic").textContent = `homestation/${station.id}/actuator`;
+    accountElement("actuatorStatus").textContent = "";
     accountElement("profileName").value = station.name;
     accountElement("profileLatitude").value = station.latitude;
     accountElement("profileLongitude").value = station.longitude;
@@ -249,6 +254,34 @@ accountElement("metricForm").addEventListener("submit", async event => {
         if (version === accountVersion) statusElement.textContent = `${data.metric.name} toegevoegd. Je kunt nu metingen versturen via het getoonde MQTT-topic.`;
     } catch (error) { errorElement.textContent = error.message; }
     finally { button.disabled = false; }
+});
+
+accountElement("actuatorForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector("button");
+    if (button.disabled) return;
+    const version = accountVersion;
+    const status = accountElement("actuatorStatus");
+    status.textContent = "";
+    errorElement.textContent = "";
+    let payload;
+    try { payload = JSON.parse(accountElement("actuatorPayload").value); }
+    catch {
+        status.textContent = "Ongeldige JSON. Controleer de haakjes, aanhalingstekens en komma’s.";
+        return;
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        status.textContent = "Gebruik een JSON-object, bijvoorbeeld {\"led\":true}.";
+        return;
+    }
+    button.disabled = true;
+    status.textContent = "JSON versturen…";
+    try {
+        const data = await accountRequest("/actuator", { method: "POST", body: JSON.stringify(payload) });
+        if (version === accountVersion) status.textContent = `JSON verstuurd naar ${data.topic}. Uitvoering door je ESP32 is niet bevestigd.`;
+    } catch (error) {
+        if (version === accountVersion) status.textContent = error.message;
+    } finally { button.disabled = false; }
 });
 
 accountElement("logoutButton").addEventListener("click", async () => {

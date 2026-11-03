@@ -4,8 +4,8 @@ const { once } = require("node:events");
 const { createApp } = require("../src/node");
 
 // Deze tests controleren de HTTP-grens zonder echte database of MQTT-broker.
-async function withAccountServer(pool, callback) {
-  const server = createApp({ pool, classCode: "test" }).listen(0, "127.0.0.1");
+async function withAccountServer(pool, callback, mqttClient) {
+  const server = createApp({ pool, mqttClient, classCode: "test" }).listen(0, "127.0.0.1");
   await once(server, "listening");
   try { await callback(`http://127.0.0.1:${server.address().port}`); }
   finally { await new Promise(resolve => server.close(resolve)); }
@@ -28,6 +28,47 @@ test("account rejects missing sessions and malformed login before database acces
     assert.equal((await fetch(url + "/account.html")).status, 200);
     assert.equal((await fetch(url + "/js/account.js")).status, 200);
   });
+});
+
+test("actuator publishing requires a session, uses its station and waits for MQTT", async () => {
+  const calls = [];
+  let stationId = "eigen-station";
+  const pool = { async query(sql) {
+    assert.match(sql, /JOIN stations/);
+    return { rowCount: 1, rows: [{ id: stationId }] };
+  } };
+  const mqttClient = { connected: true, publish(topic, payload, options, callback) {
+    calls.push({ topic, payload, options });
+    setImmediate(() => callback());
+  } };
+  await withAccountServer(pool, async url => {
+    const endpoint = url + "/api/account/actuator";
+    const headers = { "Content-Type": "application/json", Cookie: "homestation_session=" + "a".repeat(64) };
+    const body = { led: true, settings: { brightness: 42 }, stationId: "ander-station", topic: "homestation/ander-station/actuator" };
+    const post = (payload, requestHeaders = headers) => fetch(endpoint, { method: "POST", headers: requestHeaders, body: JSON.stringify(payload) });
+    assert.equal((await post(body, { "Content-Type": "application/json" })).status, 401);
+    assert.equal((await post(body, { ...headers, Cookie: "homestation_session=invalid" })).status, 401);
+    assert.equal((await post(body, { ...headers, "Content-Type": "text/plain" })).status, 415);
+    assert.equal((await post([])).status, 400);
+    assert.equal((await post({ value: "é".repeat(600) })).status, 413);
+    assert.equal((await fetch(endpoint, { method: "POST", headers, body: "{" })).status, 400);
+    assert.equal(calls.length, 0);
+    let response = await post(body);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { success: true, topic: "homestation/eigen-station/actuator" });
+    assert.deepEqual(calls[0], { topic: "homestation/eigen-station/actuator", payload: JSON.stringify(body), options: { qos: 0, retain: false } });
+    stationId = "nieuwe-naam";
+    response = await post({ led: false });
+    assert.equal((await response.json()).topic, "homestation/nieuwe-naam/actuator");
+    mqttClient.connected = false;
+    assert.equal((await post(body)).status, 503);
+    assert.equal(calls.length, 2);
+    mqttClient.connected = true;
+    mqttClient.publish = (topic, payload, options, callback) => callback(new Error("private broker details"));
+    response = await post(body);
+    assert.equal(response.status, 502);
+    assert.ok(!(await response.text()).includes("private broker details"));
+  }, mqttClient);
 });
 
 test("authenticated account validates profile and history filters before reading or changing data", async () => {

@@ -3,55 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Home Station Network</title>
-
-    <!-- Leaflet levert de stijlen en scripts voor de interactieve weerkaart. -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
-
+    <meta name="theme-color" content="#254c3e">
+    <meta name="description" content="Ontdek het weer om je heen. Bekijk de metingen van onze Home Stations en voeg je eigen weerstation toe.">
+    <title>Weerkaart — Home Station</title>
+    <link rel="icon" href="/assets/weather-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-
-<body>
-<!-- De navigatie is op alle pagina’s gelijk. -->
+<body class="home-page">
+<a class="skip-link" href="#main-content">Ga naar de inhoud</a>
 <header>
-    <div>
-        <h1>Home Station Network</h1>
-        <p>Live weergegevens van onze Home Stations</p>
-    </div>
-
-    <nav>
-        <a href="/">Weerkaart</a>
-        <a href="/register.html">Station aanmelden</a>
-        <a href="/connect.html">Hoe verstuur ik data?</a>
-        <a href="/account.html">Mijn account</a>
+    <a class="brand" href="/" aria-label="Home Station — naar de weerkaart">
+        <img src="/assets/weather-mark.svg" width="48" height="48" alt="">
+        <span><strong>Home Station<span class="brand-dot">.</span></strong><small>Samen meten, meer weten</small></span>
+    </a>
+    <nav aria-label="Hoofdnavigatie">
+        <a href="/" aria-current="page">Weerkaart</a>
+        <a href="/connect.html">ESP32 verbinden</a>
+        <a href="/account.html">Mijn station</a>
+        <a href="/register.html" class="nav-cta">Station aanmelden <span aria-hidden="true">↗</span></a>
     </nav>
 </header>
-
-<main>
-    <section class="intro">
-        <h2>Weerkaart</h2>
-        <p>
-            Bekijk de actuele temperatuur, luchtvochtigheid en
-            windsnelheid van alle Home Stations.
-        </p>
+<main id="main-content">
+    <section class="home-intro" aria-labelledby="home-title">
+        <h1 id="home-title">Weerkaart</h1>
+        <p>Temperatuur, luchtvochtigheid en wind, gemeten door onze Home Stations.</p>
     </section>
-
-    <!-- map.js vult de status en de kaart na het ophalen van de stations. -->
-    <p id="mapStatus" role="status">Stations laden…</p>
-    <div id="map"></div>
-
+    <div class="network-summary" aria-label="Het netwerk in cijfers">
+        <span><strong id="stationCount">—</strong> stations op de kaart</span>
+        <span><strong id="reportingCount">—</strong> met metingen</span>
+    </div>
+    <section id="weerkaart" class="map-section" aria-labelledby="map-heading">
+        <div class="map-card">
+            <div class="map-toolbar"><h2 id="map-heading" class="map-title">Onze weerstations</h2><span class="map-hint">Klik op een station voor de metingen</span></div>
+            <div id="map" aria-label="Interactieve kaart met weerstations"></div>
+            <p id="mapStatus" role="status">Stations laden…</p>
+        </div>
+    </section>
+    <section class="stations-section" aria-labelledby="stations-heading">
+        <div class="section-heading"><h2 id="stations-heading">Metingen per station</h2></div>
+        <div id="stationList" class="station-grid"><p class="empty-state">Even geduld, we halen de stations op.</p></div>
+    </section>
 </main>
-
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-
-<!-- Laad de eigen kaartcode nadat zowel de HTML als Leaflet beschikbaar is. -->
+<footer><a class="footer-brand" href="/">Home Station<span>.</span></a><p>Gemaakt om samen het weer te ontdekken.</p><a href="/admin.html">Beheer <span aria-hidden="true">↗</span></a></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/js/map.js"></script>
-
 </body>
 </html>

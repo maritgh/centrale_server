@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { storeMqttReading, startMqtt } = require("../src/mqtt");
+const { storeMqttReading, startMqtt, publishActuator } = require("../src/mqtt");
 // Vaste testgegevens; dit is geen sleutel van een echt station.
 const apiKey = "a".repeat(64);
 const payload = value => Buffer.from(JSON.stringify({ apiKey, value }));
@@ -71,7 +71,7 @@ test("MQTT subscribes on reconnect and completes messages after database process
   const subscriber = startMqtt({
     pool,
     url: "mqtt://user:secret@example.test:1884",
-    connect(url) { assert.match(url, /^mqtt:/); return client; },
+    connect(url, options) { assert.match(url, /^mqtt:/); assert.equal(options.queueQoSZero, false); return client; },
     logger: { log() {}, warn(message) { warnings.push(message); }, error(message) { errors.push(message); } },
   });
   assert.equal(subscriber, client);
@@ -108,4 +108,24 @@ test("MQTT subscribes on reconnect and completes messages after database process
   assert.equal(client.getHomeStationStatus().subscribed, false);
   client.emit("error", Object.assign(new Error("network failure"), { code: "ECONNREFUSED" }));
   assert.equal(client.getHomeStationStatus().lastConnectionError, "ECONNREFUSED");
+});
+
+test("actuator publishing fails when unavailable and bounds waiting for MQTT", async () => {
+  await assert.rejects(publishActuator(undefined, "test", {}), { status: 503 });
+  for (const body of [null, [], "on", 1]) {
+    await assert.rejects(publishActuator(undefined, "test", body), { status: 400 });
+  }
+  let complete;
+  let settled = false;
+  const client = { connected: true, publish(topic, payload, options, callback) { complete = callback; } };
+  const pending = publishActuator(client, "test", { led: true }).then(() => { settled = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, false);
+  complete();
+  await pending;
+  assert.equal(settled, true);
+  await assert.rejects(publishActuator(client, "test", {}, 10), { status: 504 });
+  complete(); // Een laat antwoord mag geen tweede afhandeling of fout veroorzaken.
+  client.publish = () => { throw new Error("private broker details"); };
+  await assert.rejects(publishActuator(client, "test", {}), { status: 502 });
 });
